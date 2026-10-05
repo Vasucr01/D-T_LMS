@@ -4,7 +4,8 @@
     "api/**": {
       "includeFiles": [
         "assets/**",
-        "node_modules/pdfkit/**"
+        "node_modules/pdfkit/js/standard-fonts/**",
+        "node_modules/pdfkit/js/data/**"
       ]
     }
   },

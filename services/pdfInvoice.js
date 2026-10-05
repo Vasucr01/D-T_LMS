@@ -3,10 +3,10 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
-// Static hints for Vercel bundler (NFT) to include PDFKit font files
+// Static hints for Vercel bundler (NFT) to trace and include PDFKit font files
 try {
-  require('pdfkit/js/standard-fonts/Helvetica.cjs');
-  require('pdfkit/js/standard-fonts/Helvetica-Bold.cjs');
+  fs.readFileSync(path.join(__dirname, '..', 'node_modules', 'pdfkit', 'js', 'standard-fonts', 'Helvetica.cjs'));
+  fs.readFileSync(path.join(__dirname, '..', 'node_modules', 'pdfkit', 'js', 'standard-fonts', 'HelveticaBold.cjs'));
 } catch (e) {}
 
 const os = require('os');
