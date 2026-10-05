@@ -4,10 +4,12 @@ require('dotenv').config();
 
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '1j2NGJGq1eKzHlIWkfexh-Ze3dApu2Xq1VlgDuw_gKHo';
 
-function postToWebhook(urlStr, data) {
+function postToWebhook(urlStr, data, maxRedirects = 5) {
   return new Promise((resolve, reject) => {
+    if (maxRedirects === 0) return reject(new Error('Too many redirects'));
+
     const parsedUrl = new URL(urlStr);
-    const postData = JSON.stringify(data);
+    const postData = typeof data === 'string' ? data : JSON.stringify(data);
 
     const options = {
       hostname: parsedUrl.hostname,
@@ -16,14 +18,25 @@ function postToWebhook(urlStr, data) {
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData)
-      }
+      },
+      timeout: 10000
     };
 
     const req = https.request(options, (res) => {
-      // Google Apps Script executes doPost on the initial POST and responds with 302/303 Found.
-      // Treating 200, 301, 302, 303 as complete success.
-      if (res.statusCode >= 200 && res.statusCode < 400) {
-        return resolve({ statusCode: 200, body: JSON.stringify({ success: true, message: 'Synced to Google Sheet' }) });
+      // Follow Google Apps Script 302/303/307 redirects to script.googleusercontent.com
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const redirectUrl = res.headers.location;
+        https.get(redirectUrl, { timeout: 10000 }, (redRes) => {
+          let body = '';
+          redRes.on('data', (chunk) => { body += chunk; });
+          redRes.on('end', () => {
+            resolve({ statusCode: redRes.statusCode, body });
+          });
+        }).on('error', (err) => {
+          // If redirect GET fails, treat initial 302 as success since Apps Script already ran doPost
+          resolve({ statusCode: 200, body: JSON.stringify({ success: true, message: 'Synced (Redirect skipped)' }) });
+        });
+        return;
       }
 
       let responseBody = '';
@@ -34,6 +47,11 @@ function postToWebhook(urlStr, data) {
     });
 
     req.on('error', (err) => reject(err));
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Google Sheet webhook request timed out'));
+    });
+
     req.write(postData);
     req.end();
   });
@@ -43,7 +61,8 @@ const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyWkcUl5ziq
 
 async function appendToGoogleSheet(regData) {
   const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
-  
+  const formattedDate = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
   const payload = {
     // Standard camelCase
     registrationId: regData.registrationId || '',
@@ -63,10 +82,11 @@ async function appendToGoogleSheet(regData) {
     razorpayPaymentId: regData.razorpayPaymentId || '',
     paymentStatus: regData.paymentStatus || 'SUCCESS',
     pdfUrl: regData.pdfUrl || '',
-    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    timestamp: formattedDate,
 
-    // Header exact match aliases for Google Apps Script doPst
+    // Header exact match aliases for Google Apps Script doPost
     'Registration ID': regData.registrationId || '',
+    '\tRegistration ID': regData.registrationId || '',
     'Full Name': regData.fullName || '',
     'Email': regData.email || '',
     'WhatsApp Number': regData.whatsappNumber || '',
@@ -81,14 +101,18 @@ async function appendToGoogleSheet(regData) {
     'Final Amount': regData.finalAmount || 249,
     'Razorpay Order ID': regData.razorpayOrderId || '',
     'Razorpay Payment ID': regData.razorpayPaymentId || '',
+    'Order ID': regData.razorpayOrderId || '',
+    'Payment ID': regData.razorpayPaymentId || '',
     'Payment Status': regData.paymentStatus || 'SUCCESS',
+    'Status': regData.paymentStatus || 'SUCCESS',
+    'Date': formattedDate,
+    'Payment Date': formattedDate,
     'PDF URL': regData.pdfUrl || '',
     'PDF Link': regData.pdfUrl || '',
     'Receipt URL': regData.pdfUrl || '',
     'Receipt Link': regData.pdfUrl || '',
     'url': regData.pdfUrl || '',
-    'pdf_url': regData.pdfUrl || '',
-    'Payment Date': new Date().toISOString().replace('T', ' ').substring(0, 19)
+    'pdf_url': regData.pdfUrl || ''
   };
 
   console.log(`[GOOGLE SHEETS SERVICE] Saving entry to Google Sheet (ID: ${GOOGLE_SHEET_ID})`);
@@ -112,3 +136,4 @@ module.exports = {
   appendToGoogleSheet,
   GOOGLE_SHEET_ID
 };
+
