@@ -25,20 +25,9 @@ configureCloudinary();
 async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
   configureCloudinary();
 
-  const isConfigured = true; // Fallback credentials guaranteed
-
   const baseFilename = filename || (typeof localFilePathOrBuffer === 'string' ? localFilePathOrBuffer.split(/[\/\\]/).pop() : 'Receipt.pdf');
-
-  if (!isConfigured) {
-    console.log('[CLOUD STORAGE] Cloudinary credentials pending in .env. Serving local server receipt URL.');
-    return {
-      success: true,
-      url: `/receipts/${baseFilename}`,
-      isCloud: false
-    };
-  }
-
   const publicIdWithExt = baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`;
+
   const uploadOptions = {
     resource_type: 'raw',
     folder: 'dt_careers_invoices',
@@ -48,19 +37,27 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
   };
 
   try {
-    let target = localFilePathOrBuffer;
+    let downloadUrl = '';
     if (Buffer.isBuffer(localFilePathOrBuffer)) {
-      target = `data:application/pdf;base64,${localFilePathOrBuffer.toString('base64')}`;
+      const uploadStream = () => new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(uploadOptions, (err, res) => {
+          if (err) reject(err);
+          else resolve(res);
+        });
+        stream.end(localFilePathOrBuffer);
+      });
+      const result = await uploadStream();
+      downloadUrl = result.secure_url;
+    } else {
+      const result = await cloudinary.uploader.upload(localFilePathOrBuffer, uploadOptions);
+      downloadUrl = result.secure_url;
     }
-    const result = await cloudinary.uploader.upload(target, uploadOptions);
-
-    const downloadUrl = result.secure_url;
 
     console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${downloadUrl}`);
     return {
       success: true,
       url: downloadUrl,
-      publicId: result.public_id,
+      publicId: publicIdWithExt,
       isCloud: true
     };
   } catch (err) {

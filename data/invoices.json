@@ -1,6 +1,6 @@
 {
   "counters": {
-    "2627": 25
+    "2627": 29
   },
   "byPayment": {
     "pay_pdfkit_live_777": {
@@ -101,6 +101,22 @@
     },
     "FREE_PROMO_015552": {
       "no": "DT/2627/25",
+      "emailed": false
+    },
+    "REG-2026-9999": {
+      "no": "DT/2627/26",
+      "emailed": false
+    },
+    "REG-2026-TEST-CLOUD": {
+      "no": "DT/2627/27",
+      "emailed": false
+    },
+    "REG-2026-STREAMTEST": {
+      "no": "DT/2627/28",
+      "emailed": false
+    },
+    "pay_test_123": {
+      "no": "DT/2627/29",
       "emailed": false
     }
   }

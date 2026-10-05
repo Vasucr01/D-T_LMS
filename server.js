@@ -80,8 +80,8 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
     // 2. Dynamic On-The-Fly PDF Generation matching exact student registration record
     let found = null;
     try {
-      const allRegs = excelService.readRegistrations() || [];
-      found = allRegs.find(r => r['Registration ID'] === cleanRegId || r.registrationId === cleanRegId);
+      const allRegs = await excelService.readRegistrationsAsync();
+      found = allRegs.find(r => (r['Registration ID'] === cleanRegId || r.registrationId === cleanRegId));
     } catch (e) {
       console.warn('[RECEIPT ROUTE] Warning reading excel for fallback:', e.message);
     }
@@ -107,8 +107,31 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
       razorpayPaymentId: 'PAY_VERIFIED'
     };
 
-    const pdfRes = await pdfInvoiceService.generatePDFReceipt(fallbackRegData);
-    const pdfBuffer = (pdfRes && pdfRes.pdfBuffer) ? pdfRes.pdfBuffer : pdfInvoiceService.buildEmergencyPdf(fallbackRegData);
+    let pdfBuffer = null;
+    try {
+      const pdfRes = await pdfInvoiceService.generatePDFReceipt(fallbackRegData);
+      pdfBuffer = (pdfRes && pdfRes.pdfBuffer) ? pdfRes.pdfBuffer : null;
+    } catch (pErr) {
+      console.warn('[RECEIPT ROUTE] Warning in generatePDFReceipt:', pErr.message);
+    }
+
+    if (!pdfBuffer) {
+      pdfBuffer = await pdfInvoiceService.buildInvoicePdf({
+        registrationId: fallbackRegData.registrationId,
+        invoiceNo: fallbackRegData.registrationId,
+        invoiceDate: new Date(),
+        servicePeriod: '2026 - 2027',
+        customer: {
+          name: fallbackRegData.fullName,
+          address: fallbackRegData.collegeName,
+          city: `${fallbackRegData.stream || ''} (${fallbackRegData.semester || ''})`,
+          phone: fallbackRegData.whatsappNumber
+        },
+        items: [{ particulars: fallbackRegData.course || 'Course Enrollment', qty: 1, rate: fallbackRegData.finalAmount || 249 }],
+        discount: 0,
+        otherCharges: 0
+      });
+    }
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -121,10 +144,10 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
 });
 
 // Dedicated Excel File Download Endpoint (/api/export-excel or /api/admin/excel)
-app.get(['/api/export-excel', '/api/admin/excel', '/registrations.xlsx'], (req, res) => {
+app.get(['/api/export-excel', '/api/admin/excel', '/registrations.xlsx'], async (req, res) => {
   try {
     const XLSX = require('xlsx');
-    const rows = excelService.readRegistrations() || [];
+    const rows = await excelService.readRegistrationsAsync();
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(rows);
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');

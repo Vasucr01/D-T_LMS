@@ -210,6 +210,83 @@ function saveRegistration(regData) {
   return writeQueue;
 }
 
+const https = require('https');
+
+/**
+ * Fetches all registered student rows directly from Google Sheets CSV
+ * @returns {Promise<Array<object>>}
+ */
+function fetchGoogleSheetRegistrations() {
+  return new Promise((resolve) => {
+    const url = 'https://docs.google.com/spreadsheets/d/1j2NGJGq1eKzHlIWkfexh-Ze3dApu2Xq1VlgDuw_gKHo/gviz/tq?tqx=out:csv';
+    const req = https.get(url, { timeout: 4000 }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const workbook = XLSX.read(data, { type: 'string' });
+          const sheetName = workbook.SheetNames[0];
+          const rawRows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+          const formattedRows = rawRows.map(r => ({
+            'Registration ID': r['ID'] || r['Registration ID'] || r['registrationId'] || '',
+            'Full Name': r['Full Name'] || r['fullName'] || '',
+            'Email': r['Email'] || r['email'] || '',
+            'WhatsApp Number': r['WhatsApp Number'] || r['whatsappNumber'] || '',
+            'College / School': r['College / School'] || r['collegeName'] || '',
+            'Stream / Class': r['Stream / Class'] || r['stream'] || '',
+            'Specialization': r['Specialization'] || r['specialization'] || '',
+            'Semester': r['Semester'] || r['semester'] || '',
+            'Course': r['Course'] || r['course'] || '',
+            'Promo Code': r['Promo Code'] || r['promoCode'] || 'N/A',
+            'Original Amount': r['Original Amount'] || r['originalAmount'] || 249,
+            'Discount': r['Discount'] || r['discountAmount'] || 0,
+            'Final Amount': r['Final Amount'] || r['finalAmount'] || 249,
+            'Razorpay Order ID': r['Order ID'] || r['Razorpay Order ID'] || r['razorpayOrderId'] || '',
+            'Razorpay Payment ID': r['Payment ID'] || r['Razorpay Payment ID'] || r['razorpayPaymentId'] || '',
+            'Payment Status': r['Status'] || r['Payment Status'] || r['paymentStatus'] || 'SUCCESS',
+            'Payment Date': r['Date'] || r['Payment Date'] || r['timestamp'] || '',
+            'Terms Accepted': r['Terms Accepted'] || 'YES',
+            'PDF URL': r['PDF URL'] || r['PDF Link'] || r['Receipt URL'] || r['url'] || ''
+          })).filter(r => r['Registration ID'] || r['Full Name']);
+          resolve(formattedRows);
+        } catch (e) {
+          console.warn('[EXCEL SERVICE] Warning parsing Google Sheet CSV:', e.message);
+          resolve([]);
+        }
+      });
+    });
+    req.on('error', (err) => {
+      console.warn('[EXCEL SERVICE] Warning fetching Google Sheet CSV:', err.message);
+      resolve([]);
+    });
+    req.on('timeout', () => {
+      req.destroy();
+      resolve([]);
+    });
+  });
+}
+
+/**
+ * Merges local registrations with Google Sheet remote registrations
+ * @returns {Promise<Array<object>>}
+ */
+async function readRegistrationsAsync() {
+  const localRows = readRegistrations() || [];
+  const remoteRows = await fetchGoogleSheetRegistrations();
+
+  const map = new Map();
+  for (const r of remoteRows) {
+    const key = r['Registration ID'] || r['Razorpay Payment ID'];
+    if (key) map.set(key, r);
+  }
+  for (const r of localRows) {
+    const key = r['Registration ID'] || r['Razorpay Payment ID'];
+    if (key) map.set(key, r);
+  }
+
+  return Array.from(map.values());
+}
+
 // Initializing file upon module load
 try {
   initializeExcelFile();
@@ -220,5 +297,6 @@ try {
 module.exports = {
   saveRegistration,
   readRegistrations,
+  readRegistrationsAsync,
   initializeExcelFile
 };
