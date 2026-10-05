@@ -1,36 +1,24 @@
 const fs = require('fs');
 const path = require('path');
+const Module = require('module');
+
+// Intercept PDFKit dynamic font resolutions and redirect to bundled assets/standard-fonts
+const originalResolveFilename = Module._resolveFilename;
+const BUNDLED_FONTS_DIR = path.join(__dirname, '..', 'assets', 'standard-fonts');
+
+Module._resolveFilename = function (request, parent, isMain, options) {
+  if (typeof request === 'string' && request.includes('standard-fonts/')) {
+    const fontFilename = path.basename(request);
+    const targetPath = path.join(BUNDLED_FONTS_DIR, fontFilename);
+    if (fs.existsSync(targetPath)) {
+      return targetPath;
+    }
+  }
+  return originalResolveFilename.apply(this, arguments);
+};
+
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
-
-// Pre-populate require.cache with PDFKit standard font metrics for Vercel serverless environment
-try {
-  const fontHelv = require('pdfkit/standard-fonts/Helvetica');
-  const fontHelvBold = require('pdfkit/standard-fonts/HelveticaBold');
-  const fontCour = require('pdfkit/standard-fonts/Courier');
-  const fontTimes = require('pdfkit/standard-fonts/TimesRoman');
-
-  const fontMap = {
-    'Helvetica': fontHelv,
-    'HelveticaBold': fontHelvBold,
-    'Courier': fontCour,
-    'TimesRoman': fontTimes
-  };
-
-  Object.entries(fontMap).forEach(([name, fontObj]) => {
-    const keys = [
-      `./standard-fonts/${name}.cjs`,
-      `../standard-fonts/${name}.cjs`,
-      `standard-fonts/${name}.cjs`,
-      `/var/task/node_modules/pdfkit/js/standard-fonts/${name}.cjs`
-    ];
-    keys.forEach(k => {
-      try { require.cache[k] = { exports: fontObj, loaded: true }; } catch (e) {}
-    });
-  });
-} catch (e) {
-  console.warn('[PDF SERVICE] Warning pre-populating font cache:', e.message);
-}
 
 const os = require('os');
 

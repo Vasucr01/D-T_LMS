@@ -1,6 +1,6 @@
 {
   "counters": {
-    "2627": 29
+    "2627": 35
   },
   "byPayment": {
     "pay_pdfkit_live_777": {
@@ -117,6 +117,30 @@
     },
     "pay_test_123": {
       "no": "DT/2627/29",
+      "emailed": false
+    },
+    "PAY_12345": {
+      "no": "DT/2627/30",
+      "emailed": false
+    },
+    "pay_mock_1789928315845": {
+      "no": "DT/2627/31",
+      "emailed": false
+    },
+    "REG-2026-HELVETICA": {
+      "no": "DT/2627/32",
+      "emailed": false
+    },
+    "REG-2026-TESTFIX": {
+      "no": "DT/2627/33",
+      "emailed": false
+    },
+    "REG-2026-CACHEPOP": {
+      "no": "DT/2627/34",
+      "emailed": false
+    },
+    "REG-2026-REDIRECTTEST": {
+      "no": "DT/2627/35",
       "emailed": false
     }
   }
