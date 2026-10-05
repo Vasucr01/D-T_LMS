@@ -60,12 +60,10 @@ function fetchRedirectUrl(urlStr, maxRedirects) {
   });
 }
 
-/**
- * Sends registration record data to Google Sheet via Webhook / Apps Script
- * @param {object} regData 
- */
+const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyWkcUl5ziqAiGIzSe_kNBElGGmqfowNDBumDso6zUQDIrtkMDVoXCYZU8d0B2-YOb6/exec';
+
 async function appendToGoogleSheet(regData) {
-  const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || '';
+  const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
   
   const payload = {
     registrationId: regData.registrationId || '',

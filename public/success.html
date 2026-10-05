@@ -106,11 +106,7 @@
           finalHref = storedDataUri;
         }
       } else if (pdfUrl && pdfUrl.startsWith('http')) {
-        let cloudUrl = pdfUrl;
-        if (cloudUrl.includes('/raw/upload/') && !cloudUrl.includes('fl_attachment')) {
-          cloudUrl = cloudUrl.replace('/raw/upload/', '/raw/upload/fl_attachment/');
-        }
-        finalHref = cloudUrl;
+        finalHref = pdfUrl;
       }
 
       downloadBtn.setAttribute('href', finalHref);

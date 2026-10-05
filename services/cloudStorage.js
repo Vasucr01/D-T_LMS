@@ -38,11 +38,11 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
     };
   }
 
-  const cleanPublicId = baseFilename.replace(/\.pdf$/i, '');
+  const publicIdWithExt = baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`;
   const uploadOptions = {
     resource_type: 'raw',
     folder: 'dt_careers_invoices',
-    public_id: cleanPublicId,
+    public_id: publicIdWithExt,
     overwrite: true,
     invalidate: true
   };
@@ -54,10 +54,7 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
     }
     const result = await cloudinary.uploader.upload(target, uploadOptions);
 
-    let downloadUrl = result.secure_url;
-    if (downloadUrl && downloadUrl.includes('/raw/upload/') && !downloadUrl.includes('fl_attachment')) {
-      downloadUrl = downloadUrl.replace('/raw/upload/', `/raw/upload/fl_attachment:${cleanPublicId}.pdf/`);
-    }
+    const downloadUrl = result.secure_url;
 
     console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${downloadUrl}`);
     return {
