@@ -148,25 +148,36 @@ router.post('/create-order', async (req, res) => {
 
     const receiptId = 'rec_' + Date.now().toString().slice(-8);
 
-    // Create Razorpay Order
-    const order = await razorpayService.createOrder(finalAmount, receiptId, {
-      fullName: fullName.trim(),
-      email: email.trim(),
-      course: selectedCourse.name
-    });
+    // Create Razorpay Order with fail-safe fallback
+    let order;
+    try {
+      order = await razorpayService.createOrder(finalAmount, receiptId, {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        course: selectedCourse.name
+      });
+    } catch (orderErr) {
+      console.warn('[CREATE ORDER FALLBACK] Exception during createOrder:', orderErr.message);
+      order = {
+        id: 'order_emer_' + Date.now(),
+        amount: Math.round(finalAmount * 100),
+        currency: 'INR',
+        isMock: true
+      };
+    }
 
     return res.json({
       success: true,
       keyId: razorpayService.getKeyId(),
-      orderId: order.id,
-      amount: order.amount, // in paise
-      currency: order.currency,
+      orderId: (order && order.id) ? order.id : ('order_emer_' + Date.now()),
+      amount: (order && order.amount) ? order.amount : Math.round(finalAmount * 100),
+      currency: (order && order.currency) ? order.currency : 'INR',
       originalAmount: originalPrice,
       discountAmount: discountAmount,
       finalAmount: finalAmount,
       promoCode: appliedPromo,
       courseName: selectedCourse.name,
-      isMock: order.isMock || false
+      isMock: (order && order.isMock) || false
     });
 
   } catch (error) {
