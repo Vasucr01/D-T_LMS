@@ -77,53 +77,59 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Extract registration ID and PDF URL from query params safely
       const urlParams = new URLSearchParams(window.location.search);
       let regId = urlParams.get('regId');
       if (!regId || regId === 'undefined' || regId === 'null' || regId.trim() === '') {
         regId = 'REG-2026-0001';
       }
 
-      let pdfUrl = urlParams.get('pdfUrl');
-
-      // Check if in-memory PDF Data URI is stored in sessionStorage
-      let storedDataUri = null;
-      try {
-        storedDataUri = sessionStorage.getItem('pdfData_' + regId);
-      } catch (e) {}
-
       document.getElementById('displayRegId').textContent = regId;
       const downloadBtn = document.getElementById('downloadPdfBtn');
       const filename = `Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
 
-      let finalHref = `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
+      // 1. Check sessionStorage for instant PDF Base64
+      let storedDataUri = null;
+      try { storedDataUri = sessionStorage.getItem('pdfData_' + regId); } catch (e) {}
 
       if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
         const blob = dataURItoBlob(storedDataUri);
         if (blob) {
-          finalHref = URL.createObjectURL(blob);
-        } else {
-          finalHref = storedDataUri;
+          const blobUrl = URL.createObjectURL(blob);
+          downloadBtn.setAttribute('href', blobUrl);
+          downloadBtn.setAttribute('download', filename);
         }
-      } else if (pdfUrl && pdfUrl.startsWith('http')) {
-        finalHref = pdfUrl;
+      } else {
+        downloadBtn.setAttribute('href', `/api/download-receipt?regId=${encodeURIComponent(regId)}`);
+        downloadBtn.setAttribute('download', filename);
       }
 
-      downloadBtn.setAttribute('href', finalHref);
-      downloadBtn.setAttribute('download', filename);
-
-      downloadBtn.addEventListener('click', (e) => {
+      downloadBtn.addEventListener('click', async (e) => {
         const href = downloadBtn.getAttribute('href');
-        if (href && href.startsWith('http')) {
+        if (href.startsWith('/api/download-receipt')) {
           e.preventDefault();
-          window.open(href, '_blank');
+          downloadBtn.textContent = 'Generating Download...';
+          try {
+            const res = await fetch(href);
+            const pdfBlob = await res.blob();
+            const blobUrl = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          } catch (err) {
+            window.location.href = href;
+          } finally {
+            downloadBtn.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Official PDF Invoice Bill
+            `;
+          }
         }
       });
 
-      let portalUrl = urlParams.get('redirectUrl');
-      if (!portalUrl || portalUrl === 'undefined' || portalUrl === 'null' || portalUrl.trim() === '') {
-        portalUrl = 'https://www.gyanteerthlearning.online/login/';
-      }
+      let portalUrl = urlParams.get('redirectUrl') || 'https://www.gyanteerthlearning.online/login/';
       document.getElementById('portalRedirectBtn').setAttribute('href', portalUrl);
     });
   </script>
