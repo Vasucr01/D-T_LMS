@@ -29,8 +29,15 @@ const COMPANY = {
   declaration: 'Declaration: The particulars stated above are true and correct to the best of our knowledge.',
 };
 
-const NAVY = '#1B365D', LIGHT = '#EAF1F8', CREAM = '#FFF4E0', LINE = '#B8CCE0';
-const SIGN = path.join(__dirname, '..', 'assets', 'signature.png');
+let SIGN_BUF = null;
+try {
+  if (fs.existsSync(SIGN)) {
+    SIGN_BUF = fs.readFileSync(SIGN);
+  }
+} catch (e) {
+  console.warn('[PDF SERVICE] Signature buffer read skipped:', e.message);
+}
+
 const { FONT_REGULAR_B64, FONT_BOLD_B64 } = require('./embeddedFonts');
 
 const FONT_R_BUF = Buffer.from(FONT_REGULAR_B64, 'base64');
@@ -225,10 +232,12 @@ function buildInvoicePdf(data) {
     doc.rect(350, y, R - 350, 18).fill(NAVY);
     doc.fillColor('#fff').font(BLD).fontSize(9);
     txt('FOR D & T CAREER PLANNERS LLP', 350, y + 4, { width: R - 350 - 6, align: 'right' });
-    try {
-      if (fs.existsSync(SIGN)) doc.image(SIGN, 360, y + 22, { fit: [200, 65] });
-    } catch (e) {
-      console.warn('[PDF SERVICE] Signature image skipped:', e.message);
+    if (SIGN_BUF) {
+      try {
+        doc.image(SIGN_BUF, 360, y + 22, { fit: [200, 65] });
+      } catch (e) {
+        console.warn('[PDF SERVICE] Signature image skipped:', e.message);
+      }
     }
     doc.fillColor('#777').font(REG).fontSize(8);
     txt(COMPANY.declaration, L, y + 92);
