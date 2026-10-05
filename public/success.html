@@ -98,15 +98,15 @@
 
       let finalHref = `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
 
-      if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
+      if (pdfUrl && pdfUrl.startsWith('http')) {
+        finalHref = pdfUrl;
+      } else if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
         const blob = dataURItoBlob(storedDataUri);
         if (blob) {
           finalHref = URL.createObjectURL(blob);
         } else {
           finalHref = storedDataUri;
         }
-      } else if (pdfUrl && pdfUrl.startsWith('http')) {
-        finalHref = pdfUrl;
       }
 
       downloadBtn.setAttribute('href', finalHref);
