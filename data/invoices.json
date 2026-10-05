@@ -1,6 +1,6 @@
 {
   "counters": {
-    "2627": 15
+    "2627": 16
   },
   "byPayment": {
     "pay_pdfkit_live_777": {
@@ -61,6 +61,10 @@
     },
     "REG-2026-LIVEVERIFY": {
       "no": "DT/2627/15",
+      "emailed": false
+    },
+    "REG-2026-0001": {
+      "no": "DT/2627/16",
       "emailed": false
     }
   }
