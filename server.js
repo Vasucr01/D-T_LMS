@@ -116,14 +116,12 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
     };
 
     const pdfRes = await pdfInvoiceService.generatePDFReceipt(fallbackRegData);
-    if (pdfRes.success && pdfRes.pdfBuffer) {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Length', pdfRes.pdfBuffer.length);
-      return res.send(pdfRes.pdfBuffer);
-    }
+    const pdfBuffer = (pdfRes && pdfRes.pdfBuffer) ? pdfRes.pdfBuffer : pdfInvoiceService.buildEmergencyPdf(fallbackRegData);
 
-    return res.status(500).send('Unable to generate PDF receipt.');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.send(pdfBuffer);
   } catch (err) {
     console.error('[RECEIPT SERVING ERROR]', err);
     return res.status(500).send('Error generating PDF receipt.');

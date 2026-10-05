@@ -1,6 +1,6 @@
 {
   "counters": {
-    "2627": 22
+    "2627": 23
   },
   "byPayment": {
     "pay_pdfkit_live_777": {
@@ -89,6 +89,10 @@
     },
     "FREE_PROMO_1791219920116": {
       "no": "DT/2627/22",
+      "emailed": false
+    },
+    "FREE_PROMO_1791220579627": {
+      "no": "DT/2627/23",
       "emailed": false
     }
   }
