@@ -1,26 +1,32 @@
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
-// Configure Cloudinary credentials if available
-if (process.env.CLOUDINARY_URL) {
-  cloudinary.config({
-    cloudinary_url: process.env.CLOUDINARY_URL
-  });
-} else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
+function configureCloudinary() {
+  if (process.env.CLOUDINARY_URL) {
+    cloudinary.config({
+      cloudinary_url: process.env.CLOUDINARY_URL
+    });
+  } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+  }
 }
 
+// Initial top-level config
+configureCloudinary();
+
 /**
- * Uploads a local PDF receipt to Cloudinary Free Cloud Storage
- * @param {string} localFilePath - Path to local PDF file
+ * Uploads a local PDF receipt or Buffer to Cloudinary Free Cloud Storage
+ * @param {string|Buffer} localFilePathOrBuffer - Path to local PDF file or Buffer
  * @param {string} filename - Preferred filename for cloud storage
  * @returns {Promise<{success: boolean, url: string, isCloud: boolean}>}
  */
 async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
+  configureCloudinary();
+
   const isConfigured = Boolean(
     process.env.CLOUDINARY_URL || 
     (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
@@ -37,19 +43,22 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
     };
   }
 
+  const uploadOptions = {
+    resource_type: 'raw',
+    folder: 'dt_careers_invoices',
+    public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
+    use_filename: true,
+    unique_filename: false,
+    overwrite: true,
+    access_mode: 'public'
+  };
+
   try {
     let result;
     if (Buffer.isBuffer(localFilePathOrBuffer)) {
       result = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          {
-            resource_type: 'raw',
-            folder: 'dt_careers_invoices',
-            public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
-            use_filename: true,
-            unique_filename: false,
-            overwrite: true
-          },
+          uploadOptions,
           (error, res) => {
             if (error) return reject(error);
             resolve(res);
@@ -58,14 +67,7 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
         stream.end(localFilePathOrBuffer);
       });
     } else {
-      result = await cloudinary.uploader.upload(localFilePathOrBuffer, {
-        resource_type: 'raw',
-        folder: 'dt_careers_invoices',
-        public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
-        use_filename: true,
-        unique_filename: false,
-        overwrite: true
-      });
+      result = await cloudinary.uploader.upload(localFilePathOrBuffer, uploadOptions);
     }
 
     console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${result.secure_url}`);

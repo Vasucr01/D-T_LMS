@@ -117,7 +117,8 @@ app.get('/receipts/:filename', async (req, res) => {
     if (pdfRes.success && pdfRes.pdfBuffer) {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-      return res.send(pdfRes.pdfBuffer);
+      res.setHeader('Content-Length', pdfRes.pdfBuffer.length);
+      return res.end(pdfRes.pdfBuffer);
     }
 
     return res.status(404).send('PDF Receipt not found.');
