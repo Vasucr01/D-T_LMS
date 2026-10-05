@@ -3,6 +3,12 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
+// Static hints for Vercel bundler (NFT) to include PDFKit font files
+try {
+  require('pdfkit/js/standard-fonts/Helvetica.cjs');
+  require('pdfkit/js/standard-fonts/Helvetica-Bold.cjs');
+} catch (e) {}
+
 const os = require('os');
 
 const RECEIPTS_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'receipts') : path.join(__dirname, '..', 'public', 'receipts');
