@@ -126,6 +126,8 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
     console.error('[RECEIPT SERVING ERROR]', err);
     return res.status(500).send('Error generating PDF receipt.');
   }
+});
+
 // Dedicated Excel File Download Endpoint (/api/export-excel or /api/admin/excel)
 app.get(['/api/export-excel', '/api/admin/excel', '/registrations.xlsx'], (req, res) => {
   try {
