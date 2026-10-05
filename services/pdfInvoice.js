@@ -2,20 +2,31 @@ const fs = require('fs');
 const path = require('path');
 const Module = require('module');
 
-// Intercept PDFKit dynamic font resolutions and redirect to bundled assets/standard-fonts
+// Intercept PDFKit dynamic font resolutions and redirect to bundled font files in services/ or assets/
 const originalResolveFilename = Module._resolveFilename;
-const BUNDLED_FONTS_DIR = path.join(__dirname, '..', 'assets', 'standard-fonts');
 
 Module._resolveFilename = function (request, parent, isMain, options) {
-  if (typeof request === 'string' && request.includes('standard-fonts/')) {
+  if (typeof request === 'string' && (request.includes('standard-fonts/') || request.endsWith('.cjs'))) {
     const fontFilename = path.basename(request);
-    const targetPath = path.join(BUNDLED_FONTS_DIR, fontFilename);
-    if (fs.existsSync(targetPath)) {
-      return targetPath;
+    const serviceFontPath = path.join(__dirname, fontFilename);
+    if (fs.existsSync(serviceFontPath)) {
+      return serviceFontPath;
+    }
+    const assetFontPath = path.join(__dirname, '..', 'assets', 'standard-fonts', fontFilename);
+    if (fs.existsSync(assetFontPath)) {
+      return assetFontPath;
     }
   }
   return originalResolveFilename.apply(this, arguments);
 };
+
+// Explicit static requires so Vercel NFT bundles font files directly alongside pdfInvoice.js
+try {
+  require('./Helvetica.cjs');
+  require('./HelveticaBold.cjs');
+  require('./Courier.cjs');
+  require('./TimesRoman.cjs');
+} catch (e) {}
 
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
