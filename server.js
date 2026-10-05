@@ -77,15 +77,7 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
       return res.sendFile(tmpPath);
     }
 
-    // 2. Check in public/receipts
-    const publicPath = path.join(__dirname, 'public', 'receipts', filename);
-    if (fs.existsSync(publicPath)) {
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      return res.sendFile(publicPath);
-    }
-
-    // 3. Dynamic On-The-Fly PDF Generation
+    // 2. Dynamic On-The-Fly PDF Generation matching exact student registration record
     let found = null;
     try {
       const allRegs = excelService.readRegistrations() || [];
