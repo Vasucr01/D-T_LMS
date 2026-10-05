@@ -165,7 +165,7 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
       res.setHeader('Content-Length', emergencyPdf.length);
       return res.send(emergencyPdf);
     } catch (finalErr) {
-      return res.status(500).send('Fatal error generating PDF receipt.');
+      return res.status(500).send(`Fatal error generating PDF receipt: ${finalErr.message} | Stack: ${finalErr.stack}`);
     }
   }
 });
