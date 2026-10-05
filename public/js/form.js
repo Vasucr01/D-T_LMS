@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const payload = {
       fullName: document.getElementById('fullName').value.trim(),
       email: document.getElementById('email').value.trim(),
-      whatsappNumber: document.getElementById('whatsappNumber').value.trim().replace(/[\s\-\+]/g, '').replace(/^(?:91|0)/, ''),
+      whatsappNumber: document.getElementById('whatsappNumber').value.trim().replace(/[\s\-\+]/g, ''),
       collegeName: document.getElementById('collegeName').value.trim(),
       stream: document.getElementById('stream').value,
       specialization: document.getElementById('specialization').value,
