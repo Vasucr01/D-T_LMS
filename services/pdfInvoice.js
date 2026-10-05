@@ -137,17 +137,10 @@ function buildInvoicePdf(data) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    let REG = 'Helvetica', BLD = 'Helvetica-Bold';
-    try {
-      doc.registerFont('R', FONT_R_BUF);
-      doc.registerFont('B', FONT_B_BUF);
-      REG = 'R';
-      BLD = 'B';
-    } catch (fontErr) {
-      console.warn('[PDF SERVICE] Using standard Helvetica font fallback:', fontErr.message);
-      REG = 'Helvetica';
-      BLD = 'Helvetica-Bold';
-    }
+    doc.registerFont('R', FONT_R_BUF);
+    doc.registerFont('B', FONT_B_BUF);
+    doc.font('R');
+    const REG = 'R', BLD = 'B';
 
     const L = 28, W = 539, R = L + W;
     const txt = (s, x, y, o = {}) => doc.text(String(s ?? ''), x, y, { lineBreak: false, ...o });
