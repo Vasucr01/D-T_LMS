@@ -3,12 +3,18 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
-const RECEIPTS_DIR = path.join(__dirname, '..', 'public', 'receipts');
-if (!fs.existsSync(RECEIPTS_DIR)) {
-  fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
+const os = require('os');
+
+const RECEIPTS_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'receipts') : path.join(__dirname, '..', 'public', 'receipts');
+try {
+  if (!fs.existsSync(RECEIPTS_DIR)) {
+    fs.mkdirSync(RECEIPTS_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn('[PDF SERVICE] Warning creating RECEIPTS_DIR:', err.message);
 }
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'data') : path.join(__dirname, '..', 'data');
 const COUNTER_FILE = path.join(DATA_DIR, 'invoices.json');
 
 // ============================ FIXED COMPANY INFO ============================
@@ -43,8 +49,14 @@ function loadDb() {
 }
 
 function saveDb(db) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(COUNTER_FILE, JSON.stringify(db, null, 2));
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify(db, null, 2));
+  } catch (err) {
+    console.warn('[PDF SERVICE] Warning saving COUNTER_FILE:', err.message);
+  }
 }
 
 function getInvoiceNo(paymentId) {
@@ -252,9 +264,12 @@ async function generatePDFReceipt(regData) {
 
     const filename = `Receipt_${(regData.registrationId || 'REG').replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
     const filePath = path.join(RECEIPTS_DIR, filename);
-    fs.writeFileSync(filePath, pdfBuffer);
-
-    console.log(`[PDF SERVICE] Built PDFkit Invoice (${no}) at: ${filePath}`);
+    try {
+      fs.writeFileSync(filePath, pdfBuffer);
+      console.log(`[PDF SERVICE] Built PDFkit Invoice (${no}) at: ${filePath}`);
+    } catch (writeErr) {
+      console.warn(`[PDF SERVICE] Unable to write file to disk (${writeErr.message}), returning pdfBuffer directly.`);
+    }
 
     return {
       success: true,

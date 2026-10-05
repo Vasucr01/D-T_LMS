@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const os = require('os');
+
+const DATA_DIR = process.env.VERCEL ? path.join(os.tmpdir(), 'data') : path.join(__dirname, '..', 'data');
 const FILE_PATH = path.join(DATA_DIR, 'registrations.xlsx');
 
 // In-memory write queue to handle concurrent Excel writes safely
@@ -33,13 +35,14 @@ const HEADERS = [
  * Ensures data directory and registrations.xlsx exist with headers
  */
 function initializeExcelFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
 
-  if (!fs.existsSync(FILE_PATH)) {
-    const workbook = XLSX.utils.book_new();
-    const worksheet = XLSX.utils.aoa_to_sheet([HEADERS]);
+    if (!fs.existsSync(FILE_PATH)) {
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet([HEADERS]);
     
     // Set column widths for readability
     worksheet['!cols'] = [
@@ -66,6 +69,9 @@ function initializeExcelFile() {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
     XLSX.writeFile(workbook, FILE_PATH);
     console.log('[EXCEL SERVICE] Created new registrations.xlsx file.');
+  }
+  } catch (err) {
+    console.warn('[EXCEL SERVICE] Warning initializing Excel file:', err.message);
   }
 }
 
@@ -190,7 +196,11 @@ function saveRegistration(regData) {
 }
 
 // Initializing file upon module load
-initializeExcelFile();
+try {
+  initializeExcelFile();
+} catch (err) {
+  console.warn('[EXCEL SERVICE] Module load initialization warning:', err.message);
+}
 
 module.exports = {
   saveRegistration,
