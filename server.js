@@ -148,25 +148,8 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
     res.setHeader('Content-Length', pdfBuffer.length);
     return res.send(pdfBuffer);
   } catch (err) {
-    console.error('[RECEIPT SERVING FALLBACK TRIGGERED]', err);
-    try {
-      const emergencyPdf = await pdfInvoiceService.buildInvoicePdf({
-        registrationId: cleanRegId,
-        invoiceNo: cleanRegId,
-        invoiceDate: new Date(),
-        servicePeriod: '2026 - 2027',
-        customer: { name: 'Student', address: 'Institution', city: 'Enrollment', phone: '' },
-        items: [{ particulars: 'Course Enrollment', qty: 1, rate: 249 }],
-        discount: 0,
-        otherCharges: 0
-      });
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.setHeader('Content-Length', emergencyPdf.length);
-      return res.send(emergencyPdf);
-    } catch (finalErr) {
-      return res.status(500).send('Error generating PDF receipt.');
-    }
+    console.error('[RECEIPT SERVING ERROR]', err);
+    return res.status(500).send(`Receipt route error: ${err.message} | Stack: ${err.stack}`);
   }
 });
 
