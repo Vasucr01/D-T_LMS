@@ -96,7 +96,7 @@
       const downloadBtn = document.getElementById('downloadPdfBtn');
       const filename = `Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
 
-      let finalHref = `/receipts/${filename}`;
+      let finalHref = `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
 
       if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
         const blob = dataURItoBlob(storedDataUri);

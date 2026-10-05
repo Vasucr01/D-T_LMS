@@ -24,7 +24,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https://*"],
-        connectSrc: ["'self'", "https://api.razorpay.com", "https://lumberjack-cx.razorpay.com"]
+        connectSrc: ["'self'", "https://api.razorpay.com", "https://lumberjack-cx.razorpay.com", "https://res.cloudinary.com", "https://*.cloudinary.com"]
       }
     }
   })
@@ -56,21 +56,24 @@ app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'ter
 app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
 app.get('/success', (req, res) => res.sendFile(path.join(__dirname, 'public', 'success.html')));
 app.get('/failed', (req, res) => res.sendFile(path.join(__dirname, 'public', 'failed.html')));
+
 const fs = require('fs');
 const os = require('os');
 const pdfInvoiceService = require('./services/pdfInvoice');
 const excelService = require('./services/excel');
 
-// Dynamic PDF Receipt Route Handler (Serves from /tmp, public, or generates on-the-fly on Vercel)
-app.get('/receipts/:filename', async (req, res) => {
+// Dedicated PDF Download API Handler (/api/download-receipt and /receipts/:filename)
+app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/receipt/:filename'], async (req, res) => {
   try {
-    const filename = path.basename(req.params.filename);
-    
+    const rawParam = req.query.regId || req.params.filename || 'REG-2026-0001';
+    const filename = rawParam.endsWith('.pdf') ? rawParam : `Receipt_${rawParam}.pdf`;
+    const cleanRegId = filename.replace(/^Receipt_/, '').replace(/\.pdf$/i, '');
+
     // 1. Check in os.tmpdir()/receipts
     const tmpPath = path.join(os.tmpdir(), 'receipts', filename);
     if (fs.existsSync(tmpPath)) {
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       return res.sendFile(tmpPath);
     }
 
@@ -78,12 +81,11 @@ app.get('/receipts/:filename', async (req, res) => {
     const publicPath = path.join(__dirname, 'public', 'receipts', filename);
     if (fs.existsSync(publicPath)) {
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       return res.sendFile(publicPath);
     }
 
-    // 3. Dynamic Fallback Generation (On-the-fly buffer creation)
-    const cleanRegId = filename.replace(/^Receipt_/, '').replace(/\.pdf$/i, '');
+    // 3. Dynamic On-The-Fly PDF Generation
     let found = null;
     try {
       const allRegs = excelService.readRegistrations() || [];
@@ -106,8 +108,8 @@ app.get('/receipts/:filename', async (req, res) => {
       razorpayPaymentId: found['Razorpay Payment ID'] || 'PAY_' + Date.now().toString().slice(-8)
     } : {
       registrationId: cleanRegId || 'REG-2026-0001',
-      fullName: 'Student',
-      email: '',
+      fullName: req.query.name || 'Student',
+      email: req.query.email || '',
       course: 'Course Enrollment',
       finalAmount: 249,
       razorpayPaymentId: 'PAY_VERIFIED'
@@ -116,15 +118,15 @@ app.get('/receipts/:filename', async (req, res) => {
     const pdfRes = await pdfInvoiceService.generatePDFReceipt(fallbackRegData);
     if (pdfRes.success && pdfRes.pdfBuffer) {
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', pdfRes.pdfBuffer.length);
-      return res.end(pdfRes.pdfBuffer);
+      return res.send(pdfRes.pdfBuffer);
     }
 
-    return res.status(404).send('PDF Receipt not found.');
+    return res.status(500).send('Unable to generate PDF receipt.');
   } catch (err) {
     console.error('[RECEIPT SERVING ERROR]', err);
-    return res.status(500).send('Error serving receipt PDF.');
+    return res.status(500).send('Error generating PDF receipt.');
   }
 });
 
