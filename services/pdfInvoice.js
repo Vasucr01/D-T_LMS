@@ -30,12 +30,12 @@ const COMPANY = {
 };
 
 const NAVY = '#1B365D', LIGHT = '#EAF1F8', CREAM = '#FFF4E0', LINE = '#B8CCE0';
-const ASSETS = path.join(__dirname, '..', 'assets');
-const FONT_R = path.join(ASSETS, 'fonts', 'NotoSans-Regular.ttf');
-const FONT_B = path.join(ASSETS, 'fonts', 'NotoSans-Bold.ttf');
-const SIGN = path.join(ASSETS, 'signature.png');
-const HAS_FONTS = fs.existsSync(FONT_R) && fs.existsSync(FONT_B);
-const RS = HAS_FONTS ? '₹' : 'Rs. ';
+const SIGN = path.join(__dirname, '..', 'assets', 'signature.png');
+const { FONT_REGULAR_B64, FONT_BOLD_B64 } = require('./embeddedFonts');
+
+const FONT_R_BUF = Buffer.from(FONT_REGULAR_B64, 'base64');
+const FONT_B_BUF = Buffer.from(FONT_BOLD_B64, 'base64');
+const RS = '₹';
 
 // ============================ INVOICE NUMBERING ============================
 function fyCode(d = new Date()) {
@@ -119,12 +119,9 @@ function buildInvoicePdf(data) {
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    let REG = 'Helvetica', BLD = 'Helvetica-Bold';
-    if (HAS_FONTS) {
-      doc.registerFont('R', FONT_R);
-      doc.registerFont('B', FONT_B);
-      REG = 'R'; BLD = 'B';
-    }
+    doc.registerFont('R', FONT_R_BUF);
+    doc.registerFont('B', FONT_B_BUF);
+    const REG = 'R', BLD = 'B';
 
     const L = 28, W = 539, R = L + W;
     const txt = (s, x, y, o = {}) => doc.text(String(s ?? ''), x, y, { lineBreak: false, ...o });
