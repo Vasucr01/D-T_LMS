@@ -181,9 +181,10 @@ router.post('/verify', async (req, res) => {
     const pdfResult = await pdfInvoiceService.generatePDFReceipt(fullPayload);
 
     // 5. Upload PDF to Cloud storage (Cloudinary free tier) if configured, else fall back to local URL
-    let finalPdfUrl = pdfResult.url || '';
-    if (pdfResult.success && pdfResult.filePath) {
-      const cloudResult = await cloudStorageService.uploadPDFToCloud(pdfResult.filePath, pdfResult.filename);
+    let finalPdfUrl = pdfResult.url || `/receipts/${pdfResult.filename}`;
+    if (pdfResult.success) {
+      const source = pdfResult.pdfBuffer || pdfResult.filePath;
+      const cloudResult = await cloudStorageService.uploadPDFToCloud(source, pdfResult.filename);
       if (cloudResult && cloudResult.url) {
         finalPdfUrl = cloudResult.url;
       }

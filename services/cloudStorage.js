@@ -20,13 +20,13 @@ if (process.env.CLOUDINARY_URL) {
  * @param {string} filename - Preferred filename for cloud storage
  * @returns {Promise<{success: boolean, url: string, isCloud: boolean}>}
  */
-async function uploadPDFToCloud(localFilePath, filename) {
+async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
   const isConfigured = Boolean(
     process.env.CLOUDINARY_URL || 
     (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
   );
 
-  const baseFilename = filename || localFilePath.split(/[\/\\]/).pop();
+  const baseFilename = filename || (typeof localFilePathOrBuffer === 'string' ? localFilePathOrBuffer.split(/[\/\\]/).pop() : 'Receipt.pdf');
 
   if (!isConfigured) {
     console.log('[CLOUD STORAGE] Cloudinary credentials pending in .env. Serving local server receipt URL.');
@@ -38,14 +38,35 @@ async function uploadPDFToCloud(localFilePath, filename) {
   }
 
   try {
-    const result = await cloudinary.uploader.upload(localFilePath, {
-      resource_type: 'raw',
-      folder: 'dt_careers_invoices',
-      public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
-      use_filename: true,
-      unique_filename: false,
-      overwrite: true
-    });
+    let result;
+    if (Buffer.isBuffer(localFilePathOrBuffer)) {
+      result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'raw',
+            folder: 'dt_careers_invoices',
+            public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
+            use_filename: true,
+            unique_filename: false,
+            overwrite: true
+          },
+          (error, res) => {
+            if (error) return reject(error);
+            resolve(res);
+          }
+        );
+        stream.end(localFilePathOrBuffer);
+      });
+    } else {
+      result = await cloudinary.uploader.upload(localFilePathOrBuffer, {
+        resource_type: 'raw',
+        folder: 'dt_careers_invoices',
+        public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
+        use_filename: true,
+        unique_filename: false,
+        overwrite: true
+      });
+    }
 
     console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${result.secure_url}`);
     return {

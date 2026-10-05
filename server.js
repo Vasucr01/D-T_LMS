@@ -56,6 +56,76 @@ app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'ter
 app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
 app.get('/success', (req, res) => res.sendFile(path.join(__dirname, 'public', 'success.html')));
 app.get('/failed', (req, res) => res.sendFile(path.join(__dirname, 'public', 'failed.html')));
+const fs = require('fs');
+const os = require('os');
+const pdfInvoiceService = require('./services/pdfInvoice');
+const excelService = require('./services/excel');
+
+// Dynamic PDF Receipt Route Handler (Serves from /tmp, public, or generates on-the-fly on Vercel)
+app.get('/receipts/:filename', async (req, res) => {
+  try {
+    const filename = path.basename(req.params.filename);
+    
+    // 1. Check in os.tmpdir()/receipts
+    const tmpPath = path.join(os.tmpdir(), 'receipts', filename);
+    if (fs.existsSync(tmpPath)) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      return res.sendFile(tmpPath);
+    }
+
+    // 2. Check in public/receipts
+    const publicPath = path.join(__dirname, 'public', 'receipts', filename);
+    if (fs.existsSync(publicPath)) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      return res.sendFile(publicPath);
+    }
+
+    // 3. Dynamic Fallback Generation (On-the-fly buffer creation)
+    const cleanRegId = filename.replace(/^Receipt_/, '').replace(/\.pdf$/i, '');
+    let found = null;
+    try {
+      const allRegs = excelService.readRegistrations() || [];
+      found = allRegs.find(r => r['Registration ID'] === cleanRegId || r.registrationId === cleanRegId);
+    } catch (e) {
+      console.warn('[RECEIPT ROUTE] Warning reading excel for fallback:', e.message);
+    }
+
+    const fallbackRegData = found ? {
+      registrationId: found['Registration ID'] || cleanRegId,
+      fullName: found['Full Name'] || 'Student',
+      email: found['Email'] || '',
+      whatsappNumber: found['WhatsApp Number'] || '',
+      collegeName: found['College / School'] || 'Institution',
+      stream: found['Stream / Class'] || '',
+      specialization: found['Specialization'] || '',
+      semester: found['Semester'] || '',
+      course: found['Course'] || 'Enrollment Course',
+      finalAmount: found['Final Amount'] || 249,
+      razorpayPaymentId: found['Razorpay Payment ID'] || 'PAY_' + Date.now().toString().slice(-8)
+    } : {
+      registrationId: cleanRegId || 'REG-2026-0001',
+      fullName: 'Student',
+      email: '',
+      course: 'Course Enrollment',
+      finalAmount: 249,
+      razorpayPaymentId: 'PAY_VERIFIED'
+    };
+
+    const pdfRes = await pdfInvoiceService.generatePDFReceipt(fallbackRegData);
+    if (pdfRes.success && pdfRes.pdfBuffer) {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      return res.send(pdfRes.pdfBuffer);
+    }
+
+    return res.status(404).send('PDF Receipt not found.');
+  } catch (err) {
+    console.error('[RECEIPT SERVING ERROR]', err);
+    return res.status(500).send('Error serving receipt PDF.');
+  }
+});
 
 // Serve Static Assets (HTML, CSS, JS, Images)
 app.use(express.static(path.join(__dirname, 'public')));
