@@ -45,6 +45,7 @@ async function appendToGoogleSheet(regData) {
   const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
   
   const payload = {
+    // Standard camelCase
     registrationId: regData.registrationId || '',
     fullName: regData.fullName || '',
     email: regData.email || '',
@@ -62,7 +63,32 @@ async function appendToGoogleSheet(regData) {
     razorpayPaymentId: regData.razorpayPaymentId || '',
     paymentStatus: regData.paymentStatus || 'SUCCESS',
     pdfUrl: regData.pdfUrl || '',
-    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19)
+    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+
+    // Header exact match aliases for Google Apps Script doPst
+    'Registration ID': regData.registrationId || '',
+    'Full Name': regData.fullName || '',
+    'Email': regData.email || '',
+    'WhatsApp Number': regData.whatsappNumber || '',
+    'College / School': regData.collegeName || '',
+    'Stream / Class': regData.stream || '',
+    'Specialization': regData.specialization || '',
+    'Semester': regData.semester || '',
+    'Course': regData.course || regData.courseName || '',
+    'Promo Code': regData.promoCode || 'N/A',
+    'Original Amount': regData.originalAmount || 249,
+    'Discount': regData.discountAmount || 0,
+    'Final Amount': regData.finalAmount || 249,
+    'Razorpay Order ID': regData.razorpayOrderId || '',
+    'Razorpay Payment ID': regData.razorpayPaymentId || '',
+    'Payment Status': regData.paymentStatus || 'SUCCESS',
+    'PDF URL': regData.pdfUrl || '',
+    'PDF Link': regData.pdfUrl || '',
+    'Receipt URL': regData.pdfUrl || '',
+    'Receipt Link': regData.pdfUrl || '',
+    'url': regData.pdfUrl || '',
+    'pdf_url': regData.pdfUrl || '',
+    'Payment Date': new Date().toISOString().replace('T', ' ').substring(0, 19)
   };
 
   console.log(`[GOOGLE SHEETS SERVICE] Saving entry to Google Sheet (ID: ${GOOGLE_SHEET_ID})`);
