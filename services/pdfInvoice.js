@@ -5,8 +5,10 @@ require('dotenv').config();
 
 // Static hints for Vercel bundler (NFT) to trace and include PDFKit font files
 try {
-  fs.readFileSync(path.join(__dirname, '..', 'node_modules', 'pdfkit', 'js', 'standard-fonts', 'Helvetica.cjs'));
-  fs.readFileSync(path.join(__dirname, '..', 'node_modules', 'pdfkit', 'js', 'standard-fonts', 'HelveticaBold.cjs'));
+  require('pdfkit/standard-fonts/Helvetica');
+  require('pdfkit/standard-fonts/HelveticaBold');
+  require('pdfkit/standard-fonts/Courier');
+  require('pdfkit/standard-fonts/TimesRoman');
 } catch (e) {}
 
 const os = require('os');
