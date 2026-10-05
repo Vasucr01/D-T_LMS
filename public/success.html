@@ -98,39 +98,25 @@
 
       let finalHref = `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
 
-      if (pdfUrl && pdfUrl.startsWith('http')) {
-        finalHref = pdfUrl;
-      } else if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
+      if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
         const blob = dataURItoBlob(storedDataUri);
         if (blob) {
           finalHref = URL.createObjectURL(blob);
         } else {
           finalHref = storedDataUri;
         }
+      } else if (pdfUrl && pdfUrl.startsWith('http')) {
+        finalHref = pdfUrl;
       }
 
       downloadBtn.setAttribute('href', finalHref);
       downloadBtn.setAttribute('download', filename);
 
-      // Single-click direct blob downloader
-      downloadBtn.addEventListener('click', async (e) => {
+      downloadBtn.addEventListener('click', (e) => {
         const href = downloadBtn.getAttribute('href');
         if (href && href.startsWith('http')) {
           e.preventDefault();
-          try {
-            const resp = await fetch(href);
-            const blob = await resp.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            const tempLink = document.createElement('a');
-            tempLink.href = blobUrl;
-            tempLink.download = filename;
-            document.body.appendChild(tempLink);
-            tempLink.click();
-            document.body.removeChild(tempLink);
-            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-          } catch (fetchErr) {
-            window.open(href, '_blank');
-          }
+          window.open(href, '_blank');
         }
       });
 

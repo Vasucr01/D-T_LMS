@@ -5,8 +5,8 @@ require('dotenv').config();
 function getTransporter() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const user = (process.env.SMTP_USER || '').trim();
-  const pass = (process.env.SMTP_PASS || '').trim();
+  const user = (process.env.SMTP_USER || 'dtcareerllp18@gmail.com').trim();
+  const pass = (process.env.SMTP_PASS || 'vayaycqzyurncesi').trim();
 
   if (!user || !pass) {
     return null;
