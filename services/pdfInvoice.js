@@ -3,13 +3,34 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
-// Static hints for Vercel bundler (NFT) to trace and include PDFKit font files
+// Pre-populate require.cache with PDFKit standard font metrics for Vercel serverless environment
 try {
-  require('pdfkit/standard-fonts/Helvetica');
-  require('pdfkit/standard-fonts/HelveticaBold');
-  require('pdfkit/standard-fonts/Courier');
-  require('pdfkit/standard-fonts/TimesRoman');
-} catch (e) {}
+  const fontHelv = require('pdfkit/standard-fonts/Helvetica');
+  const fontHelvBold = require('pdfkit/standard-fonts/HelveticaBold');
+  const fontCour = require('pdfkit/standard-fonts/Courier');
+  const fontTimes = require('pdfkit/standard-fonts/TimesRoman');
+
+  const fontMap = {
+    'Helvetica': fontHelv,
+    'HelveticaBold': fontHelvBold,
+    'Courier': fontCour,
+    'TimesRoman': fontTimes
+  };
+
+  Object.entries(fontMap).forEach(([name, fontObj]) => {
+    const keys = [
+      `./standard-fonts/${name}.cjs`,
+      `../standard-fonts/${name}.cjs`,
+      `standard-fonts/${name}.cjs`,
+      `/var/task/node_modules/pdfkit/js/standard-fonts/${name}.cjs`
+    ];
+    keys.forEach(k => {
+      try { require.cache[k] = { exports: fontObj, loaded: true }; } catch (e) {}
+    });
+  });
+} catch (e) {
+  console.warn('[PDF SERVICE] Warning pre-populating font cache:', e.message);
+}
 
 const os = require('os');
 
