@@ -1,0 +1,31 @@
+{
+  "counters": {
+    "2627": 6
+  },
+  "byPayment": {
+    "pay_pdfkit_live_777": {
+      "no": "DT/2627/01",
+      "emailed": false
+    },
+    "pay_mock_1790962413743": {
+      "no": "DT/2627/02",
+      "emailed": false
+    },
+    "pay_mock_1791125350849": {
+      "no": "DT/2627/03",
+      "emailed": false
+    },
+    "pay_cloud_verified_100": {
+      "no": "DT/2627/04",
+      "emailed": false
+    },
+    "pay_mock_1791126653137": {
+      "no": "DT/2627/05",
+      "emailed": false
+    },
+    "pay_mock_1791126875530": {
+      "no": "DT/2627/06",
+      "emailed": false
+    }
+  }
+}

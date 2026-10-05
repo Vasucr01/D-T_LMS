@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Successful | DT Careers</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="/images/logo.png" type="image/png">
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="header-container">
+      <a href="/" class="brand-logo">
+        <img src="/images/logo.png" alt="D&T Career Planners LLP Logo" class="brand-logo-img">
+      </a>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="status-card">
+
+      <div class="status-icon-wrap success">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+
+      <h1 class="status-title">Payment Successful!</h1>
+      <p class="status-subtitle">Thank you for enrolling with DT Careers. Your registration has been confirmed.</p>
+
+      <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--color-text-muted);">
+        Your Unique Registration ID:
+      </div>
+      <div class="reg-id-badge" id="displayRegId">REG-2026-0001</div>
+
+      <div style="margin-top: 1rem; margin-bottom: 1rem;">
+        <a href="#" id="downloadPdfBtn" target="_blank" download class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.65rem 1.25rem; font-size: 0.95rem; border: 1px solid var(--color-navy); color: var(--color-navy); font-weight: 700; border-radius: var(--radius-md);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download Official PDF Invoice Bill
+        </a>
+      </div>
+
+      <a href="https://www.gyanteerthlearning.online/login/" class="btn-primary" id="portalRedirectBtn" style="margin-top: 1rem;">
+        Proceed to Learning Portal
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border: none; padding-top: 0; align-items: center;">
+      <p>© 2026 D&T Career Planners LLP. All Rights Reserved.</p>
+      <div class="powered-by-box">
+        <span class="powered-by-text">Powered by</span>
+        <img src="/images/gyanteerth-logo.png" alt="Gyanteerth Logo" class="powered-by-logo-img">
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Extract registration ID and PDF URL from query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const regId = urlParams.get('regId') || 'REG-2026-0001';
+      const pdfUrl = urlParams.get('pdfUrl') || `/receipts/Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
+      const portalUrl = urlParams.get('redirectUrl') || 'https://www.gyanteerthlearning.online/login/';
+
+      document.getElementById('displayRegId').textContent = regId;
+      const downloadBtn = document.getElementById('downloadPdfBtn');
+      downloadBtn.setAttribute('href', pdfUrl);
+      downloadBtn.setAttribute('target', '_blank');
+      document.getElementById('portalRedirectBtn').setAttribute('href', portalUrl);
+    });
+  </script>
+</body>
+</html>
