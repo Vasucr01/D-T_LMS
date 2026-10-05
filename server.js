@@ -126,6 +126,23 @@ app.get(['/api/download-receipt', '/api/pdf', '/receipts/:filename', '/api/recei
     console.error('[RECEIPT SERVING ERROR]', err);
     return res.status(500).send('Error generating PDF receipt.');
   }
+// Dedicated Excel File Download Endpoint (/api/export-excel or /api/admin/excel)
+app.get(['/api/export-excel', '/api/admin/excel', '/registrations.xlsx'], (req, res) => {
+  try {
+    const XLSX = require('xlsx');
+    const rows = excelService.readRegistrations() || [];
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
+    const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="registrations.xlsx"');
+    return res.send(excelBuffer);
+  } catch (err) {
+    console.error('[EXCEL EXPORT ERROR]', err);
+    return res.status(500).json({ success: false, message: 'Unable to export Excel file.' });
+  }
 });
 
 // Serve Static Assets (HTML, CSS, JS, Images)

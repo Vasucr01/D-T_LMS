@@ -138,50 +138,54 @@ function buildInvoicePdf(data) {
     doc.fontSize(9.5);
     txt(`Email id- ${COMPANY.email}      Phone no.- ${COMPANY.phone}`, L, 108, { width: W, align: 'center' });
     doc.fillColor(NAVY).font(BLD).fontSize(15);
-    txt('INVOICE', L, 132, { width: W, align: 'center' });
+    txt('OFFICIAL REGISTRATION INVOICE', L, 130, { width: W, align: 'center' });
 
     // ---- Meta fields ----
     const field = (label, value, lx, vx, vw, y) => {
       doc.rect(vx, y - 2, vw, 16).fill(CREAM);
-      doc.fillColor(NAVY).font(BLD).fontSize(10); txt(label, lx, y);
-      doc.fillColor('#000').font(REG); txt(value, vx + 4, y);
+      doc.fillColor(NAVY).font(BLD).fontSize(9.5); txt(label, lx, y);
+      doc.fillColor('#000').font(REG).fontSize(9.5); txt(value, vx + 4, y);
     };
-    field('Invoice', data.invoiceNo, L, L + 62, 240, 168);
-    field('Service Period', data.servicePeriod, L, L + 90, 212, 190);
-    field('Invoice Date', fmtDate(data.invoiceDate), 380, 455, 112, 168);
-    field('PAN No.', COMPANY.pan, 380, 455, 112, 190);
+    const regIdVal = data.registrationId || data.invoiceNo || 'REG-2026-0001';
+    field('Reg. ID', regIdVal, L, L + 62, 240, 162);
+    field('Invoice No.', data.invoiceNo, L, L + 62, 240, 184);
+    field('Service Period', data.servicePeriod, L, L + 90, 212, 206);
+
+    field('Invoice Date', fmtDate(data.invoiceDate), 375, 450, 117, 162);
+    field('PAN No.', COMPANY.pan, 375, 450, 117, 184);
+    field('Pay Status', 'CONFIRMED', 375, 450, 117, 206);
 
     // ---- Bill to ----
-    doc.rect(L, 222, W, 20).fill(NAVY);
-    doc.fillColor('#fff').font(BLD).fontSize(10); txt('BILL TO / CUSTOMER DETAILS', L + 4, 227);
+    doc.rect(L, 230, W, 20).fill(NAVY);
+    doc.fillColor('#fff').font(BLD).fontSize(10); txt('STUDENT & BILLING DETAILS', L + 6, 235);
     const c = data.customer || {};
-    [['Customer Name:', c.name], ['Billing Address:', c.address], ['City :', c.city], ['Phone:', c.phone]]
+    [['Student Name:', c.name || 'N/A'], ['College / Institution:', c.address || 'N/A'], ['Stream & Semester:', c.city || 'N/A'], ['WhatsApp Mobile:', c.phone || 'N/A']]
       .forEach(([k, v], i) => {
-        const y = 242 + i * 26;
-        if (i % 2 === 0) doc.rect(L, y, W, 26).fill(LIGHT);
-        doc.fillColor('#000').font(REG).fontSize(10);
-        txt(`${k} ${v || ''}`, L + 4, y + 8, { width: W - 10 });
+        const y = 250 + i * 24;
+        if (i % 2 === 0) doc.rect(L, y, W, 24).fill(LIGHT);
+        doc.fillColor('#000').font(REG).fontSize(9.5);
+        txt(`${k} ${v || ''}`, L + 6, y + 6, { width: W - 12 });
       });
 
     // ---- Items table ----
-    const top = 360, hh = 34, rh = 28;
-    const X = [L, 88, 330, 395, 465, R];
+    const top = 356, hh = 30, rh = 26;
+    const X = [L, 78, 330, 395, 465, R];
     doc.rect(L, top, W, hh).fill(NAVY);
-    doc.fillColor('#fff').font(BLD).fontSize(10);
-    ['Sr. No.', 'Particulars', 'Qty.', `Rate (${RS.trim()})`, `Amount (${RS.trim()})`]
-      .forEach((h, i) => txt(h, X[i], top + 12, { width: X[i + 1] - X[i], align: 'center' }));
+    doc.fillColor('#fff').font(BLD).fontSize(9.5);
+    ['Sr. No.', 'Particulars / Course Enrolled', 'Qty.', `Rate (${RS.trim()})`, `Amount (${RS.trim()})`]
+      .forEach((h, i) => txt(h, X[i], top + 10, { width: X[i + 1] - X[i], align: 'center' }));
     for (let r = 0; r < 5; r++) {
       const y = top + hh + r * rh;
       doc.lineWidth(0.5).strokeColor(LINE).rect(L, y, W, rh).stroke();
       X.slice(1, -1).forEach((x) => doc.moveTo(x, y).lineTo(x, y + rh).stroke());
-      doc.fillColor('#000').font(REG).fontSize(10);
-      txt(r + 1, L, y + 9, { width: 60, align: 'center' });
+      doc.fillColor('#000').font(REG).fontSize(9.5);
+      txt(r + 1, L, y + 7, { width: 50, align: 'center' });
       const it = data.items[r];
       if (it) {
-        txt(it.particulars, X[1] + 4, y + 9, { width: X[2] - X[1] - 8 });
-        txt(Number(it.qty).toFixed(2), X[2], y + 9, { width: X[3] - X[2], align: 'center' });
-        txt(inr(it.rate), X[3] + 4, y + 9);
-        txt(inr(it.qty * it.rate), X[4] + 4, y + 9);
+        txt(it.particulars, X[1] + 4, y + 7, { width: X[2] - X[1] - 8 });
+        txt(Number(it.qty).toFixed(2), X[2], y + 7, { width: X[3] - X[2], align: 'center' });
+        txt(inr(it.rate), X[3] + 4, y + 7);
+        txt(inr(it.qty * it.rate), X[4] + 4, y + 7);
       }
     }
 
@@ -189,42 +193,42 @@ function buildInvoicePdf(data) {
     const subtotal = data.items.reduce((s, i) => s + (i.qty * i.rate), 0);
     const discount = data.discount || 0, other = data.otherCharges || 0;
     const total = Math.max(0, subtotal - discount + other);
-    let y = top + hh + 5 * rh + 18;
+    let y = top + hh + 5 * rh + 14;
     [['Subtotal', subtotal], [`Discount (${RS.trim()})`, discount], [`Other Charges (${RS.trim()})`, other]]
       .forEach(([k, v], i) => {
-        doc.rect(L, y, W, 17).fill(i % 2 === 0 ? LIGHT : '#fff');
-        doc.fillColor(NAVY).font(BLD).fontSize(10);
-        txt(k, L, y + 4, { width: 465 - L - 6, align: 'right' });
-        txt(inr(v), 469, y + 4);
-        y += 17;
+        doc.rect(L, y, W, 16).fill(i % 2 === 0 ? LIGHT : '#fff');
+        doc.fillColor(NAVY).font(BLD).fontSize(9.5);
+        txt(k, L, y + 3, { width: 465 - L - 6, align: 'right' });
+        txt(inr(v), 469, y + 3);
+        y += 16;
       });
     doc.rect(L, y, W, 20).fill(NAVY);
-    doc.fillColor('#fff').font(BLD).fontSize(10.5);
+    doc.fillColor('#fff').font(BLD).fontSize(10);
     txt(`TOTAL AMOUNT PAYABLE (${RS.trim()})`, L, y + 5, { width: 465 - L - 6, align: 'right' });
     txt(inr(total), 469, y + 5);
 
     // ---- Amount in words ----
-    y += 40;
-    doc.fillColor(NAVY).font(BLD).fontSize(10); txt('Amount in Words:', L, y);
-    doc.fillColor('#000').font(REG); txt(amountInWords(total), L + 100, y, { width: W - 100 });
+    y += 34;
+    doc.fillColor(NAVY).font(BLD).fontSize(9.5); txt('Amount in Words:', L, y);
+    doc.fillColor('#000').font(REG).fontSize(9.5); txt(amountInWords(total), L + 95, y, { width: W - 95 });
 
     // ---- Signature block ----
-    y += 30;
+    y += 28;
     doc.rect(350, y, R - 350, 18).fill(NAVY);
-    doc.fillColor('#fff').font(BLD).fontSize(9.5);
-    txt('FOR D & T CAREER PLANNERS LLP', 350, y + 5, { width: R - 350 - 6, align: 'right' });
+    doc.fillColor('#fff').font(BLD).fontSize(9);
+    txt('FOR D & T CAREER PLANNERS LLP', 350, y + 4, { width: R - 350 - 6, align: 'right' });
     try {
-      if (fs.existsSync(SIGN)) doc.image(SIGN, 360, y + 24, { fit: [200, 70] });
+      if (fs.existsSync(SIGN)) doc.image(SIGN, 360, y + 22, { fit: [200, 65] });
     } catch (e) {
       console.warn('[PDF SERVICE] Signature image skipped:', e.message);
     }
     doc.fillColor('#777').font(REG).fontSize(8);
-    txt(COMPANY.declaration, L, y + 100);
+    txt(COMPANY.declaration, L, y + 92);
 
     // ---- Footer ----
-    doc.fillColor('#000').fontSize(9);
-    txt('D T Career Planners LLP | Commercial Invoice', L, 800, { width: W, align: 'center' });
-    txt('Page 1 of 1', L, 800, { width: W, align: 'right' });
+    doc.fillColor('#000').fontSize(8.5);
+    txt('D T Career Planners LLP | Commercial Invoice & Registration Receipt', L, 795, { width: W, align: 'center' });
+    txt('Page 1 of 1', L, 795, { width: W, align: 'right' });
 
     doc.end();
   });
@@ -316,6 +320,7 @@ async function generatePDFReceipt(regData) {
     let pdfBuffer;
     try {
       pdfBuffer = await buildInvoicePdf({
+        registrationId: regData.registrationId || 'REG-2026-0001',
         invoiceNo: no,
         invoiceDate: now,
         servicePeriod: servicePeriod,

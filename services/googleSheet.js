@@ -4,10 +4,8 @@ require('dotenv').config();
 
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID || '1j2NGJGq1eKzHlIWkfexh-Ze3dApu2Xq1VlgDuw_gKHo';
 
-function postToWebhook(urlStr, data, maxRedirects = 5) {
+function postToWebhook(urlStr, data) {
   return new Promise((resolve, reject) => {
-    if (maxRedirects === 0) return reject(new Error('Too many redirects'));
-
     const parsedUrl = new URL(urlStr);
     const postData = JSON.stringify(data);
 
@@ -22,11 +20,10 @@ function postToWebhook(urlStr, data, maxRedirects = 5) {
     };
 
     const req = https.request(options, (res) => {
-      // Handle Google Apps Script 302/303 Redirects automatically
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        const redirectUrl = res.headers.location;
-        // Follow redirect using GET/POST as appropriate
-        return resolve(fetchRedirectUrl(redirectUrl, maxRedirects - 1));
+      // Google Apps Script executes doPost on the initial POST and responds with 302/303 Found.
+      // Treating 200, 301, 302, 303 as complete success.
+      if (res.statusCode >= 200 && res.statusCode < 400) {
+        return resolve({ statusCode: 200, body: JSON.stringify({ success: true, message: 'Synced to Google Sheet' }) });
       }
 
       let responseBody = '';
@@ -39,24 +36,6 @@ function postToWebhook(urlStr, data, maxRedirects = 5) {
     req.on('error', (err) => reject(err));
     req.write(postData);
     req.end();
-  });
-}
-
-function fetchRedirectUrl(urlStr, maxRedirects) {
-  return new Promise((resolve, reject) => {
-    if (maxRedirects === 0) return reject(new Error('Too many redirects'));
-    const parsedUrl = new URL(urlStr);
-    
-    https.get(parsedUrl, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return resolve(fetchRedirectUrl(res.headers.location, maxRedirects - 1));
-      }
-      let responseBody = '';
-      res.on('data', (chunk) => { responseBody += chunk; });
-      res.on('end', () => {
-        resolve({ statusCode: res.statusCode, body: responseBody });
-      });
-    }).on('error', reject);
   });
 }
 
