@@ -55,10 +55,15 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
     }
     const result = await cloudinary.uploader.upload(target, uploadOptions);
 
-    console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${result.secure_url}`);
+    let downloadUrl = result.secure_url;
+    if (downloadUrl && downloadUrl.includes('/raw/upload/') && !downloadUrl.includes('fl_attachment')) {
+      downloadUrl = downloadUrl.replace('/raw/upload/', '/raw/upload/fl_attachment/');
+    }
+
+    console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${downloadUrl}`);
     return {
       success: true,
-      url: result.secure_url,
+      url: downloadUrl,
       publicId: result.public_id,
       isCloud: true
     };

@@ -96,25 +96,47 @@
       const downloadBtn = document.getElementById('downloadPdfBtn');
       const filename = `Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
 
+      let finalHref = `/receipts/${filename}`;
+
       if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
         const blob = dataURItoBlob(storedDataUri);
         if (blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          downloadBtn.setAttribute('href', blobUrl);
-          downloadBtn.setAttribute('download', filename);
+          finalHref = URL.createObjectURL(blob);
         } else {
-          downloadBtn.setAttribute('href', storedDataUri);
-          downloadBtn.setAttribute('download', filename);
+          finalHref = storedDataUri;
         }
       } else if (pdfUrl && pdfUrl.startsWith('http')) {
-        downloadBtn.setAttribute('href', pdfUrl);
-        downloadBtn.setAttribute('target', '_blank');
-        downloadBtn.setAttribute('download', filename);
-      } else {
-        downloadBtn.setAttribute('href', `/receipts/${filename}`);
-        downloadBtn.setAttribute('target', '_blank');
-        downloadBtn.setAttribute('download', filename);
+        let cloudUrl = pdfUrl;
+        if (cloudUrl.includes('/raw/upload/') && !cloudUrl.includes('fl_attachment')) {
+          cloudUrl = cloudUrl.replace('/raw/upload/', '/raw/upload/fl_attachment/');
+        }
+        finalHref = cloudUrl;
       }
+
+      downloadBtn.setAttribute('href', finalHref);
+      downloadBtn.setAttribute('download', filename);
+
+      // Single-click direct blob downloader
+      downloadBtn.addEventListener('click', async (e) => {
+        const href = downloadBtn.getAttribute('href');
+        if (href && href.startsWith('http')) {
+          e.preventDefault();
+          try {
+            const resp = await fetch(href);
+            const blob = await resp.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const tempLink = document.createElement('a');
+            tempLink.href = blobUrl;
+            tempLink.download = filename;
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+          } catch (fetchErr) {
+            window.open(href, '_blank');
+          }
+        }
+      });
 
       let portalUrl = urlParams.get('redirectUrl');
       if (!portalUrl || portalUrl === 'undefined' || portalUrl === 'null' || portalUrl.trim() === '') {
