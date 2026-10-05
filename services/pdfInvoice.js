@@ -35,7 +35,7 @@ const { FONT_REGULAR_B64, FONT_BOLD_B64 } = require('./embeddedFonts');
 
 const FONT_R_BUF = Buffer.from(FONT_REGULAR_B64, 'base64');
 const FONT_B_BUF = Buffer.from(FONT_BOLD_B64, 'base64');
-const RS = '₹';
+const RS = 'Rs. ';
 
 // ============================ INVOICE NUMBERING ============================
 function fyCode(d = new Date()) {
