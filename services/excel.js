@@ -99,18 +99,27 @@ function generateNextRegistrationId(existingRows) {
   const prefix = `REG-${currentYear}-`;
   
   let maxNumber = 0;
-  for (const row of existingRows) {
-    const regId = row['Registration ID'] || '';
-    if (regId.startsWith(prefix)) {
-      const numPart = parseInt(regId.replace(prefix, ''), 10);
-      if (!isNaN(numPart) && numPart > maxNumber) {
-        maxNumber = numPart;
+  if (Array.isArray(existingRows) && existingRows.length > 0) {
+    for (const row of existingRows) {
+      const regId = row['Registration ID'] || '';
+      if (regId.startsWith(prefix)) {
+        const numPart = parseInt(regId.replace(prefix, ''), 10);
+        if (!isNaN(numPart) && numPart > maxNumber) {
+          maxNumber = numPart;
+        }
       }
     }
   }
 
-  const nextNumber = maxNumber + 1;
-  return `${prefix}${String(nextNumber).padStart(4, '0')}`;
+  if (maxNumber > 0) {
+    const nextNumber = maxNumber + 1;
+    return `${prefix}${String(nextNumber).padStart(4, '0')}`;
+  }
+
+  // On Vercel serverless containers where existingRows is empty,
+  // generate a unique sequential ID based on current timestamp
+  const timeNum = (Math.floor(Date.now() / 1000) % 9000) + 1000;
+  return `${prefix}${timeNum}`;
 }
 
 /**

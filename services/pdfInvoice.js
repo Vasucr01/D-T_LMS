@@ -61,11 +61,14 @@ function saveDb(db) {
 
 function getInvoiceNo(paymentId) {
   const db = loadDb();
-  if (paymentId && db.byPayment[paymentId]) {
+  if (paymentId && db.byPayment && db.byPayment[paymentId]) {
     return { no: db.byPayment[paymentId].no, existing: true, emailed: !!db.byPayment[paymentId].emailed };
   }
   const k = fyCode();
-  const n = (db.counters[k] || 0) + 1;
+  let n = (db.counters[k] || 0) + 1;
+  if (n === 1 && process.env.VERCEL) {
+    n = (Math.floor(Date.now() / 1000) % 9000) + 1000;
+  }
   db.counters[k] = n;
   const no = `${COMPANY.prefix}/${k}/${String(n).padStart(2, '0')}`;
   if (paymentId) {
