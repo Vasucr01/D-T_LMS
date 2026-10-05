@@ -1,6 +1,6 @@
 {
   "counters": {
-    "2627": 6
+    "2627": 7
   },
   "byPayment": {
     "pay_pdfkit_live_777": {
@@ -25,6 +25,10 @@
     },
     "pay_mock_1791126875530": {
       "no": "DT/2627/06",
+      "emailed": false
+    },
+    "REG-2026-TEST": {
+      "no": "DT/2627/07",
       "emailed": false
     }
   }

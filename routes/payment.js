@@ -133,11 +133,14 @@ router.post('/create-order', async (req, res) => {
         console.error('[FREE ENROLLMENT EMAIL ERROR]', emailErr.message);
       }
 
+      const pdfDataUri = pdfResult.pdfBuffer ? `data:application/pdf;base64,${pdfResult.pdfBuffer.toString('base64')}` : '';
+
       return res.json({
         success: true,
         isFree: true,
         registrationId: saveResult.registrationId,
         pdfUrl: finalPdfUrl,
+        pdfDataUri: pdfDataUri,
         redirectUrl: process.env.SUCCESS_REDIRECT_URL || 'https://www.gyanteerthlearning.online/login/'
       });
     }
@@ -270,12 +273,15 @@ router.post('/verify', async (req, res) => {
       console.error('[PAYMENT ROUTE EMAIL ERROR]', emailErr.message);
     }
 
+    const pdfDataUri = pdfResult.pdfBuffer ? `data:application/pdf;base64,${pdfResult.pdfBuffer.toString('base64')}` : '';
+
     // 8. Return success with Registration ID, PDF URL & target redirect URL
     return res.json({
       success: true,
       message: 'Payment verified and registration recorded successfully.',
       registrationId: saveResult.registrationId,
       pdfUrl: finalPdfUrl,
+      pdfDataUri: pdfDataUri,
       redirectUrl: process.env.SUCCESS_REDIRECT_URL || 'https://www.gyanteerthlearning.online/login/'
     });
 

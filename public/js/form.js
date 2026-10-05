@@ -237,6 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Handle 100% Free Promo Code Direct Success
       if (orderData.isFree) {
         console.log('[FREE ENROLLMENT] 100% Discount applied, redirecting to success.');
+        if (orderData.pdfDataUri) {
+          try { sessionStorage.setItem('pdfData_' + orderData.registrationId, orderData.pdfDataUri); } catch (e) {}
+        }
         window.location.href = `/success.html?regId=${orderData.registrationId}&pdfUrl=${encodeURIComponent(orderData.pdfUrl || '')}`;
         return;
       }
@@ -282,6 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const verifyData = await verifyResponse.json();
 
             if (verifyData.success) {
+              if (verifyData.pdfDataUri) {
+                try { sessionStorage.setItem('pdfData_' + verifyData.registrationId, verifyData.pdfDataUri); } catch (e) {}
+              }
               // Redirect to Success Page with Registration ID
               window.location.href = `/success.html?regId=${verifyData.registrationId}&pdfUrl=${encodeURIComponent(verifyData.pdfUrl || '')}`;
             } else {
@@ -328,6 +334,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const verifyData = await verifyResponse.json();
           if (verifyData.success) {
+            if (verifyData.pdfDataUri) {
+              try { sessionStorage.setItem('pdfData_' + verifyData.registrationId, verifyData.pdfDataUri); } catch (e) {}
+            }
             window.location.href = `/success.html?regId=${verifyData.registrationId}&pdfUrl=${encodeURIComponent(verifyData.pdfUrl || '')}`;
           } else {
             window.location.href = `/failed.html?reason=${encodeURIComponent(verifyData.message)}`;

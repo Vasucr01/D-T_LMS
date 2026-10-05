@@ -70,7 +70,16 @@
       }
 
       let pdfUrl = urlParams.get('pdfUrl');
-      if (!pdfUrl || pdfUrl === 'undefined' || pdfUrl === 'null' || pdfUrl.trim() === '') {
+
+      // Check if in-memory PDF Data URI is stored in sessionStorage
+      let storedDataUri = null;
+      try {
+        storedDataUri = sessionStorage.getItem('pdfData_' + regId);
+      } catch (e) {}
+
+      if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
+        pdfUrl = storedDataUri;
+      } else if (!pdfUrl || pdfUrl === 'undefined' || pdfUrl === 'null' || pdfUrl.trim() === '') {
         pdfUrl = `/receipts/Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
       }
 
@@ -82,7 +91,12 @@
       document.getElementById('displayRegId').textContent = regId;
       const downloadBtn = document.getElementById('downloadPdfBtn');
       downloadBtn.setAttribute('href', pdfUrl);
-      downloadBtn.setAttribute('target', '_blank');
+      downloadBtn.setAttribute('download', `Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`);
+      
+      if (!pdfUrl.startsWith('data:')) {
+        downloadBtn.setAttribute('target', '_blank');
+      }
+
       document.getElementById('portalRedirectBtn').setAttribute('href', portalUrl);
     });
   </script>

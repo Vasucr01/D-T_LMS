@@ -54,21 +54,11 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
   };
 
   try {
-    let result;
+    let target = localFilePathOrBuffer;
     if (Buffer.isBuffer(localFilePathOrBuffer)) {
-      result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          uploadOptions,
-          (error, res) => {
-            if (error) return reject(error);
-            resolve(res);
-          }
-        );
-        stream.end(localFilePathOrBuffer);
-      });
-    } else {
-      result = await cloudinary.uploader.upload(localFilePathOrBuffer, uploadOptions);
+      target = `data:application/pdf;base64,${localFilePathOrBuffer.toString('base64')}`;
     }
+    const result = await cloudinary.uploader.upload(target, uploadOptions);
 
     console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${result.secure_url}`);
     return {
