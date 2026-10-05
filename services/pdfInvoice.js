@@ -2,19 +2,37 @@ const fs = require('fs');
 const path = require('path');
 const Module = require('module');
 
-// Intercept PDFKit dynamic font resolutions and redirect to bundled font files in services/ or assets/
+// Intercept PDFKit dynamic font resolutions strictly for standard font filenames
 const originalResolveFilename = Module._resolveFilename;
+const STANDARD_FONTS = new Set([
+  'Courier.cjs', 'Courier.mjs',
+  'CourierBold.cjs', 'CourierBold.mjs',
+  'CourierBoldOblique.cjs', 'CourierBoldOblique.mjs',
+  'CourierOblique.cjs', 'CourierOblique.mjs',
+  'Helvetica.cjs', 'Helvetica.mjs',
+  'HelveticaBold.cjs', 'HelveticaBold.mjs',
+  'HelveticaBoldOblique.cjs', 'HelveticaBoldOblique.mjs',
+  'HelveticaOblique.cjs', 'HelveticaOblique.mjs',
+  'Symbol.cjs', 'Symbol.mjs',
+  'TimesBold.cjs', 'TimesBold.mjs',
+  'TimesBoldItalic.cjs', 'TimesBoldItalic.mjs',
+  'TimesItalic.cjs', 'TimesItalic.mjs',
+  'TimesRoman.cjs', 'TimesRoman.mjs',
+  'ZapfDingbats.cjs', 'ZapfDingbats.mjs'
+]);
 
 Module._resolveFilename = function (request, parent, isMain, options) {
-  if (typeof request === 'string' && (request.includes('standard-fonts/') || request.endsWith('.cjs'))) {
+  if (typeof request === 'string') {
     const fontFilename = path.basename(request);
-    const serviceFontPath = path.join(__dirname, fontFilename);
-    if (fs.existsSync(serviceFontPath)) {
-      return serviceFontPath;
-    }
-    const assetFontPath = path.join(__dirname, '..', 'assets', 'standard-fonts', fontFilename);
-    if (fs.existsSync(assetFontPath)) {
-      return assetFontPath;
+    if (STANDARD_FONTS.has(fontFilename)) {
+      const serviceFontPath = path.join(__dirname, fontFilename);
+      if (fs.existsSync(serviceFontPath)) {
+        return serviceFontPath;
+      }
+      const assetFontPath = path.join(__dirname, '..', 'assets', 'standard-fonts', fontFilename);
+      if (fs.existsSync(assetFontPath)) {
+        return assetFontPath;
+      }
     }
   }
   return originalResolveFilename.apply(this, arguments);
