@@ -26,8 +26,10 @@ const COMPANY = {
   phone: '7874370990',
   pan: 'AAZFD8275H',
   prefix: 'DT',
-  declaration: 'Declaration: The particulars stated above are true and correct to the best of our knowledge.',
+  declaration: 'Declaration: The particulars stated above are true and correct to the best of our knowledge.'
 };
+const NAVY = '#1B365D', LIGHT = '#EAF1F8', CREAM = '#FFF4E0', LINE = '#B8CCE0';
+const SIGN = path.join(__dirname, '..', 'assets', 'signature.png');
 
 let SIGN_BUF = null;
 try {
