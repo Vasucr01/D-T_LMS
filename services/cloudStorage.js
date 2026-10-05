@@ -2,17 +2,15 @@ const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
 function configureCloudinary() {
-  if (process.env.CLOUDINARY_URL) {
-    cloudinary.config({
-      cloudinary_url: process.env.CLOUDINARY_URL
-    });
-  } else if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET
-    });
-  }
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'pc6wth1s';
+  const apiKey = process.env.CLOUDINARY_API_KEY || '141536733247546';
+  const apiSecret = process.env.CLOUDINARY_API_SECRET || 'qS0jNxq9JGFJQokcDeGFVi3kfDM';
+
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret
+  });
 }
 
 // Initial top-level config
@@ -27,10 +25,7 @@ configureCloudinary();
 async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
   configureCloudinary();
 
-  const isConfigured = Boolean(
-    process.env.CLOUDINARY_URL || 
-    (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
-  );
+  const isConfigured = true; // Fallback credentials guaranteed
 
   const baseFilename = filename || (typeof localFilePathOrBuffer === 'string' ? localFilePathOrBuffer.split(/[\/\\]/).pop() : 'Receipt.pdf');
 

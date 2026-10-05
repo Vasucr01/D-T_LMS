@@ -61,6 +61,21 @@
   </footer>
 
   <script>
+    function dataURItoBlob(dataURI) {
+      try {
+        const byteString = atob(dataURI.split(',')[1]);
+        const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+      } catch (e) {
+        return null;
+      }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       // Extract registration ID and PDF URL from query params safely
       const urlParams = new URLSearchParams(window.location.search);
@@ -77,26 +92,34 @@
         storedDataUri = sessionStorage.getItem('pdfData_' + regId);
       } catch (e) {}
 
+      document.getElementById('displayRegId').textContent = regId;
+      const downloadBtn = document.getElementById('downloadPdfBtn');
+      const filename = `Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
+
       if (storedDataUri && storedDataUri.startsWith('data:application/pdf')) {
-        pdfUrl = storedDataUri;
-      } else if (!pdfUrl || pdfUrl === 'undefined' || pdfUrl === 'null' || pdfUrl.trim() === '') {
-        pdfUrl = `/receipts/Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
+        const blob = dataURItoBlob(storedDataUri);
+        if (blob) {
+          const blobUrl = URL.createObjectURL(blob);
+          downloadBtn.setAttribute('href', blobUrl);
+          downloadBtn.setAttribute('download', filename);
+        } else {
+          downloadBtn.setAttribute('href', storedDataUri);
+          downloadBtn.setAttribute('download', filename);
+        }
+      } else if (pdfUrl && pdfUrl.startsWith('http')) {
+        downloadBtn.setAttribute('href', pdfUrl);
+        downloadBtn.setAttribute('target', '_blank');
+        downloadBtn.setAttribute('download', filename);
+      } else {
+        downloadBtn.setAttribute('href', `/receipts/${filename}`);
+        downloadBtn.setAttribute('target', '_blank');
+        downloadBtn.setAttribute('download', filename);
       }
 
       let portalUrl = urlParams.get('redirectUrl');
       if (!portalUrl || portalUrl === 'undefined' || portalUrl === 'null' || portalUrl.trim() === '') {
         portalUrl = 'https://www.gyanteerthlearning.online/login/';
       }
-
-      document.getElementById('displayRegId').textContent = regId;
-      const downloadBtn = document.getElementById('downloadPdfBtn');
-      downloadBtn.setAttribute('href', pdfUrl);
-      downloadBtn.setAttribute('download', `Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`);
-      
-      if (!pdfUrl.startsWith('data:')) {
-        downloadBtn.setAttribute('target', '_blank');
-      }
-
       document.getElementById('portalRedirectBtn').setAttribute('href', portalUrl);
     });
   </script>
