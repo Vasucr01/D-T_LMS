@@ -62,11 +62,22 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Extract registration ID and PDF URL from query params
+      // Extract registration ID and PDF URL from query params safely
       const urlParams = new URLSearchParams(window.location.search);
-      const regId = urlParams.get('regId') || 'REG-2026-0001';
-      const pdfUrl = urlParams.get('pdfUrl') || `/receipts/Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
-      const portalUrl = urlParams.get('redirectUrl') || 'https://www.gyanteerthlearning.online/login/';
+      let regId = urlParams.get('regId');
+      if (!regId || regId === 'undefined' || regId === 'null' || regId.trim() === '') {
+        regId = 'REG-2026-0001';
+      }
+
+      let pdfUrl = urlParams.get('pdfUrl');
+      if (!pdfUrl || pdfUrl === 'undefined' || pdfUrl === 'null' || pdfUrl.trim() === '') {
+        pdfUrl = `/receipts/Receipt_${regId.replace(/[^a-zA-Z0-9\-]/g, '')}.pdf`;
+      }
+
+      let portalUrl = urlParams.get('redirectUrl');
+      if (!portalUrl || portalUrl === 'undefined' || portalUrl === 'null' || portalUrl.trim() === '') {
+        portalUrl = 'https://www.gyanteerthlearning.online/login/';
+      }
 
       document.getElementById('displayRegId').textContent = regId;
       const downloadBtn = document.getElementById('downloadPdfBtn');

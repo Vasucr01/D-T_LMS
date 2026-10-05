@@ -234,6 +234,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Handle 100% Free Promo Code Direct Success
+      if (orderData.isFree) {
+        console.log('[FREE ENROLLMENT] 100% Discount applied, redirecting to success.');
+        window.location.href = `/success.html?regId=${orderData.registrationId}&pdfUrl=${encodeURIComponent(orderData.pdfUrl || '')}`;
+        return;
+      }
+
       // Step B: Configure Razorpay Modal Checkout Options
       const options = {
         key: orderData.keyId,

@@ -67,6 +67,12 @@ const PROMO_CODES = {
     value: 100,         // ₹100 flat discount
     active: true,
     description: "₹100 Flat Discount"
+  },
+  "TESTVASU9879319768": {
+    type: "percentage",
+    value: 100,        // 100% discount (Free Access)
+    active: true,
+    description: "100% Free Special Access Discount"
   }
 };
 

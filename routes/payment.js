@@ -80,7 +80,68 @@ router.post('/create-order', async (req, res) => {
       }
     }
 
-    const finalAmount = Math.max(1, originalPrice - discountAmount);
+    const finalAmount = Math.max(0, originalPrice - discountAmount);
+
+    // If finalAmount is 0 (100% discount promo code), complete free registration immediately without Razorpay
+    if (finalAmount === 0) {
+      const regPayload = {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        whatsappNumber: whatsappNumber.trim(),
+        collegeName: collegeName.trim(),
+        stream: stream.trim(),
+        specialization: specialization.trim(),
+        semester: semester.trim(),
+        course: selectedCourse.name,
+        promoCode: appliedPromo,
+        originalAmount: originalPrice,
+        discountAmount: discountAmount,
+        finalAmount: 0,
+        razorpayOrderId: 'FREE_100_PROMO',
+        razorpayPaymentId: 'FREE_PROMO_' + Date.now().toString().slice(-8),
+        paymentStatus: 'SUCCESS',
+        termsAccepted: termsAccepted
+      };
+
+      const saveResult = await excelService.saveRegistration(regPayload);
+      const fullPayload = { ...regPayload, registrationId: saveResult.registrationId };
+      const pdfResult = await pdfInvoiceService.generatePDFReceipt(fullPayload);
+
+      let finalPdfUrl = pdfResult.url || `/receipts/${pdfResult.filename}`;
+      if (pdfResult.success) {
+        const source = pdfResult.pdfBuffer || pdfResult.filePath;
+        const cloudResult = await cloudStorageService.uploadPDFToCloud(source, pdfResult.filename);
+        if (cloudResult && cloudResult.url) {
+          finalPdfUrl = cloudResult.url;
+        }
+      }
+
+      // Await Google Sheet sync to guarantee persistence on Vercel
+      await googleSheetService.appendToGoogleSheet({
+        ...fullPayload,
+        pdfUrl: finalPdfUrl
+      }).catch(err => console.error('[GOOGLE SHEET SYNC ERROR]', err));
+
+      try {
+        await emailService.sendEnrollmentConfirmationEmail({
+          ...fullPayload,
+          pdfUrl: finalPdfUrl,
+          pdfBuffer: pdfResult.pdfBuffer,
+          filePath: pdfResult.filePath
+        });
+      } catch (emailErr) {
+        console.error('[FREE ENROLLMENT EMAIL ERROR]', emailErr.message);
+      }
+
+      return res.json({
+        success: true,
+        isFree: true,
+        registrationId: saveResult.registrationId,
+        pdfUrl: finalPdfUrl,
+        redirectUrl: process.env.SUCCESS_REDIRECT_URL || 'https://www.gyanteerthlearning.online/login/'
+      });
+    }
+
     const receiptId = 'rec_' + Date.now().toString().slice(-8);
 
     // Create Razorpay Order
@@ -191,7 +252,7 @@ router.post('/verify', async (req, res) => {
     }
 
     // 6. Asynchronously push to Google Sheet (includes Cloud / Local PDF Download Link)
-    googleSheetService.appendToGoogleSheet({
+    await googleSheetService.appendToGoogleSheet({
       ...fullPayload,
       pdfUrl: finalPdfUrl
     }).catch(err => console.error('[GOOGLE SHEET SYNC ERROR]', err));
