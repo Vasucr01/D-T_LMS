@@ -38,14 +38,13 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
     };
   }
 
+  const cleanPublicId = baseFilename.replace(/\.pdf$/i, '');
   const uploadOptions = {
     resource_type: 'raw',
     folder: 'dt_careers_invoices',
-    public_id: baseFilename.endsWith('.pdf') ? baseFilename : `${baseFilename}.pdf`,
-    use_filename: true,
-    unique_filename: false,
+    public_id: cleanPublicId,
     overwrite: true,
-    access_mode: 'public'
+    invalidate: true
   };
 
   try {
@@ -57,7 +56,7 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
 
     let downloadUrl = result.secure_url;
     if (downloadUrl && downloadUrl.includes('/raw/upload/') && !downloadUrl.includes('fl_attachment')) {
-      downloadUrl = downloadUrl.replace('/raw/upload/', '/raw/upload/fl_attachment/');
+      downloadUrl = downloadUrl.replace('/raw/upload/', `/raw/upload/fl_attachment:${cleanPublicId}.pdf/`);
     }
 
     console.log(`[CLOUD STORAGE] Uploaded PDF to Cloudinary CDN: ${downloadUrl}`);
@@ -71,7 +70,7 @@ async function uploadPDFToCloud(localFilePathOrBuffer, filename) {
     console.error('[CLOUD STORAGE ERROR] Upload failed:', err.message);
     return {
       success: false,
-      url: `/receipts/${baseFilename}`,
+      url: `/api/download-receipt?filename=${encodeURIComponent(baseFilename)}`,
       error: err.message
     };
   }

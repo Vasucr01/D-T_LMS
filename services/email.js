@@ -49,7 +49,17 @@ async function sendEnrollmentConfirmationEmail(regData) {
   }
 
   const fromEmail = process.env.EMAIL_FROM || `"D & T CAREER PLANNERS LLP" <${process.env.SMTP_USER || 'no-reply@dtcareers.in'}>`;
-  const pdfDownloadUrl = regData.pdfUrl || '#';
+  
+  const domain = process.env.BASE_URL || 
+                 (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 
+                 (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://www.gyanteerthlearning.online'));
+
+  const cleanRegId = (regData.registrationId || 'REG-2026-0001').trim();
+  let pdfDownloadUrl = regData.pdfUrl || '';
+  if (!pdfDownloadUrl || !pdfDownloadUrl.startsWith('http')) {
+    pdfDownloadUrl = `${domain}/api/download-receipt?regId=${encodeURIComponent(cleanRegId)}`;
+  }
+  
   const loginUrl = process.env.SUCCESS_REDIRECT_URL || 'https://www.gyanteerthlearning.online/login/';
 
   // HTML Email Body Template

@@ -107,11 +107,12 @@ router.post('/create-order', async (req, res) => {
       const fullPayload = { ...regPayload, registrationId: saveResult.registrationId };
       const pdfResult = await pdfInvoiceService.generatePDFReceipt(fullPayload);
 
-      let finalPdfUrl = pdfResult.url || `/receipts/${pdfResult.filename}`;
+      const regId = saveResult.registrationId || 'REG-2026-0001';
+      let finalPdfUrl = `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
       if (pdfResult.success) {
         const source = pdfResult.pdfBuffer || pdfResult.filePath;
-        const cloudResult = await cloudStorageService.uploadPDFToCloud(source, pdfResult.filename);
-        if (cloudResult && cloudResult.url) {
+        const cloudResult = await cloudStorageService.uploadPDFToCloud(source, `Receipt_${regId}.pdf`);
+        if (cloudResult && cloudResult.url && cloudResult.url.startsWith('http')) {
           finalPdfUrl = cloudResult.url;
         }
       }
@@ -245,11 +246,12 @@ router.post('/verify', async (req, res) => {
     const pdfResult = await pdfInvoiceService.generatePDFReceipt(fullPayload);
 
     // 5. Upload PDF to Cloud storage (Cloudinary free tier) if configured, else fall back to local URL
-    let finalPdfUrl = pdfResult.url || `/receipts/${pdfResult.filename}`;
+    const regId = saveResult.registrationId || 'REG-2026-0001';
+    let finalPdfUrl = `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
     if (pdfResult.success) {
       const source = pdfResult.pdfBuffer || pdfResult.filePath;
-      const cloudResult = await cloudStorageService.uploadPDFToCloud(source, pdfResult.filename);
-      if (cloudResult && cloudResult.url) {
+      const cloudResult = await cloudStorageService.uploadPDFToCloud(source, `Receipt_${regId}.pdf`);
+      if (cloudResult && cloudResult.url && cloudResult.url.startsWith('http')) {
         finalPdfUrl = cloudResult.url;
       }
     }
