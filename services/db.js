@@ -90,15 +90,19 @@ async function findRegistrationInMongo(identifierStr) {
   try {
     const Registration = require('../models/Registration');
     const query = identifierStr.trim().toLowerCase();
+    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const cleanPhone = query.replace(/[\s\-\+]/g, '');
 
-    const found = await Registration.findOne({
-      $or: [
-        { registrationId: new RegExp(`^${query}$`, 'i') },
-        { email: new RegExp(`^${query}$`, 'i') },
-        { whatsappNumber: cleanPhone }
-      ]
-    });
+    const conditions = [
+      { registrationId: new RegExp(`^${safeQuery}$`, 'i') },
+      { email: new RegExp(`^${safeQuery}$`, 'i') }
+    ];
+
+    if (cleanPhone.length >= 7) {
+      conditions.push({ whatsappNumber: new RegExp(safeQuery, 'i') });
+    }
+
+    const found = await Registration.findOne({ $or: conditions });
     return found;
   } catch (err) {
     console.error('[MONGODB FIND ERROR]', err.message);

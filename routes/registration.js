@@ -156,36 +156,49 @@ router.post('/student-login', async (req, res) => {
     }
 
     const queryStr = identifier.trim().toLowerCase();
-    
-    // 1. Check MongoDB first (if connected)
-    const dbService = require('../services/db');
-    let foundDoc = await dbService.findRegistrationInMongo(queryStr);
     let found = null;
+    
+    // 1. Try MongoDB lookup first
+    try {
+      const dbService = require('../services/db');
+      const foundDoc = await dbService.findRegistrationInMongo(queryStr);
+      if (foundDoc) {
+        found = {
+          'Registration ID': foundDoc.registrationId,
+          'Full Name': foundDoc.fullName,
+          'Email': foundDoc.email,
+          'WhatsApp Number': foundDoc.whatsappNumber,
+          'College / School': foundDoc.collegeName,
+          'Stream / Class': foundDoc.stream,
+          'Course': foundDoc.course,
+          'Payment Status': foundDoc.paymentStatus,
+          'Payment Date': foundDoc.createdAt ? foundDoc.createdAt.toISOString() : '',
+          'PDF URL': foundDoc.pdfUrl
+        };
+      }
+    } catch (dbErr) {
+      console.warn('[STUDENT LOGIN] Mongo lookup warning:', dbErr.message);
+    }
 
-    if (foundDoc) {
-      found = {
-        'Registration ID': foundDoc.registrationId,
-        'Full Name': foundDoc.fullName,
-        'Email': foundDoc.email,
-        'WhatsApp Number': foundDoc.whatsappNumber,
-        'College / School': foundDoc.collegeName,
-        'Stream / Class': foundDoc.stream,
-        'Course': foundDoc.course,
-        'Payment Status': foundDoc.paymentStatus,
-        'Payment Date': foundDoc.createdAt ? foundDoc.createdAt.toISOString() : '',
-        'PDF URL': foundDoc.pdfUrl
-      };
-    } else {
-      // 2. Fallback to Excel & Google Sheet merged records
-      const allRegistrations = await excelService.readRegistrationsAsync();
-      found = allRegistrations.find(r => {
-        const regId = (r['Registration ID'] || r['ID'] || r.registrationId || '').toLowerCase();
-        const email = (r['Email'] || r.email || '').toLowerCase();
-        const phone = (r['WhatsApp Number'] || r.whatsappNumber || r.phone || '').replace(/[\s\-\+]/g, '');
-        const cleanQuery = queryStr.replace(/[\s\-\+]/g, '');
-        
-        return (regId === queryStr || email === queryStr || (cleanQuery.length >= 7 && phone.includes(cleanQuery)));
-      });
+    // 2. Fallback to Excel & Google Sheet merged records if not found in Mongo
+    if (!found) {
+      try {
+        const allRegistrations = await excelService.readRegistrationsAsync();
+        found = allRegistrations.find(r => {
+          const regId = String(r['Registration ID'] || r['ID'] || r.registrationId || '').toLowerCase();
+          const email = String(r['Email'] || r.email || '').toLowerCase();
+          const phone = String(r['WhatsApp Number'] || r.whatsappNumber || r.phone || '').replace(/[\s\-\+]/g, '');
+          const cleanQuery = queryStr.replace(/[\s\-\+]/g, '');
+          
+          return (
+            (regId && regId === queryStr) || 
+            (email && email === queryStr) || 
+            (cleanQuery.length >= 7 && phone.includes(cleanQuery))
+          );
+        });
+      } catch (excelErr) {
+        console.warn('[STUDENT LOGIN] Excel/GoogleSheet lookup warning:', excelErr.message);
+      }
     }
 
     if (!found) {
@@ -195,8 +208,11 @@ router.post('/student-login', async (req, res) => {
       });
     }
 
-    const regId = found['Registration ID'] || found['ID'] || found.registrationId || 'REG-2026-0001';
-    const pdfUrl = found['PDF URL'] || `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
+    const rawRegId = String(found['Registration ID'] || found['ID'] || found.registrationId || '').trim();
+    const fallbackId = (found['Razorpay Payment ID'] || found['Payment ID']) ? `REG-${String(found['Razorpay Payment ID'] || found['Payment ID']).slice(-4)}` : 'REG-2026-0001';
+    const regId = rawRegId ? rawRegId : fallbackId;
+    
+    const pdfUrl = (found['PDF URL'] && String(found['PDF URL']).startsWith('http')) ? found['PDF URL'] : `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
     const redirectUrl = process.env.SUCCESS_REDIRECT_URL || 'https://www.gyanteerthlearning.online/login/';
 
     return res.json({
