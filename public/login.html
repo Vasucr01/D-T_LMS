@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal Login | DT Careers</title>
+  <meta name="description" content="Log in to your DT Careers student portal to access course materials, redirect to Gyanteerth learning portal, and download your official invoice receipt.">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" href="/images/logo.png" type="image/png">
+  <style>
+    .login-container {
+      max-width: 580px;
+      margin: 2.5rem auto;
+      padding: 0 1rem;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+      padding: 2.25rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 86, 164, 0.08);
+      color: var(--color-royal);
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-full);
+      font-size: 0.825rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .login-title {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-navy);
+      margin-bottom: 0.5rem;
+    }
+    .login-subtitle {
+      font-size: 0.925rem;
+      color: var(--color-text-muted);
+      line-height: 1.6;
+    }
+    .portal-result-card {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .student-welcome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .student-name {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-navy);
+    }
+    .student-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .detail-item {
+      background: #ffffff;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid #cbd5e1;
+    }
+    .detail-label {
+      font-size: 0.775rem;
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .detail-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-navy);
+      margin-top: 0.2rem;
+      word-break: break-word;
+    }
+    .portal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .btn-gyanteerth {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      background: linear-gradient(135deg, #0056A4 0%, #00A8E8 100%);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 0.9rem 1.25rem;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      box-shadow: 0 4px 14px rgba(0, 86, 164, 0.3);
+      transition: all 0.2s ease;
+    }
+    .btn-gyanteerth:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 86, 164, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Overlay Loader -->
+  <div class="overlay-loader" id="overlayLoader" style="display: none;">
+    <div class="spinner"></div>
+    <h3 style="font-family: var(--font-heading); font-size: 1.25rem;">Verifying Student Account...</h3>
+    <p style="font-size: 0.9rem; color: #94A3B8; margin-top: 0.25rem;">Please wait a moment.</p>
+  </div>
+
+  <!-- Header Navigation -->
+  <header class="header">
+    <div class="header-container">
+      <a href="/" class="brand-logo">
+        <img src="/images/logo.png" alt="D&T Career Planners LLP Logo" class="brand-logo-img">
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/form" class="nav-link">Courses</a></li>
+        <li><a href="/login" class="nav-link active">Student Login</a></li>
+        <li><a href="/terms" class="nav-link">Terms</a></li>
+      </ul>
+
+      <a href="/form" class="btn-header">
+        Enroll Now
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+
+      <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation menu">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div class="mobile-menu" id="mobileMenu">
+      <ul class="mobile-nav-list">
+        <li><a href="/" class="mobile-nav-link">Home</a></li>
+        <li><a href="/form" class="mobile-nav-link">Enrollment Form</a></li>
+        <li><a href="/login" class="mobile-nav-link active">Student Login</a></li>
+        <li><a href="/terms" class="mobile-nav-link">Terms & Conditions</a></li>
+        <li><a href="/privacy" class="mobile-nav-link">Privacy Policy</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="login-container">
+      <div class="login-card">
+        
+        <div class="login-header">
+          <div class="login-badge">
+            🎓 Student Portal Access
+          </div>
+          <h1 class="login-title">Welcome Back, Student!</h1>
+          <p class="login-subtitle">
+            Enter your registered Email Address or Registration ID to log in, download your invoice receipt, and access the Gyanteerth learning portal.
+          </p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="studentLoginForm" novalidate>
+          <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="studentIdentifier" class="form-label">
+              Email Address or Registration ID <span class="required-star">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="studentIdentifier" 
+              class="form-control" 
+              placeholder="e.g. REG-2026-0001 or student@example.com" 
+              required
+              autocomplete="on"
+            >
+            <div class="field-error" id="loginError" style="display: none; margin-top: 0.5rem;"></div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; font-size: 1rem; padding: 0.85rem;">
+            Login & Access Portal
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </form>
+
+        <!-- Student Portal Result Card -->
+        <div class="portal-result-card" id="portalResultCard">
+          <div class="student-welcome">
+            <div>
+              <div style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 600; text-transform: uppercase;">Student Account Verified</div>
+              <div class="student-name" id="resStudentName">Student Name</div>
+            </div>
+            <div class="reg-id-badge" id="resRegId" style="margin: 0; font-size: 0.9rem;">REG-2026-0001</div>
+          </div>
+
+          <div class="student-detail-grid">
+            <div class="detail-item">
+              <div class="detail-label">Enrolled Course</div>
+              <div class="detail-value" id="resCourse">Complete Package</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Email Address</div>
+              <div class="detail-value" id="resEmail">student@example.com</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Institution</div>
+              <div class="detail-value" id="resCollege">College Name</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Payment Status</div>
+              <div class="detail-value" style="color: #059669; display: flex; align-items: center; gap: 0.25rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425a.267.267 0 0 1 .02-.022z"/></svg>
+                <span id="resStatus">VERIFIED</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="portal-actions">
+            <!-- Redirect Button to Gyanteerth -->
+            <a href="https://www.gyanteerthlearning.online/login/" target="_blank" rel="noopener" class="btn-gyanteerth" id="resGyanteerthBtn">
+              <span>Go to Gyanteerth Learning Portal</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
+
+            <!-- Download Receipt PDF -->
+            <a href="#" target="_blank" download class="btn-secondary" id="resPdfBtn" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; text-decoration: none; padding: 0.75rem; font-weight: 700; border: 1px solid var(--color-navy); color: var(--color-navy); border-radius: var(--radius-md);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download Official PDF Invoice Bill
+            </a>
+
+            <!-- Reset / Check another -->
+            <button type="button" id="resetLoginBtn" class="btn-secondary" style="border: none; background: transparent; color: var(--color-text-muted); font-size: 0.875rem; cursor: pointer; text-decoration: underline;">
+              Log in with a different account
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border: none; padding-top: 0; align-items: center;">
+      <p>© 2026 D&T Career Planners LLP. All Rights Reserved.</p>
+      <div class="powered-by-box">
+        <span class="powered-by-text">Powered by</span>
+        <img src="/images/gyanteerth-logo.png" alt="Gyanteerth Logo" class="powered-by-logo-img">
+      </div>
+      <p><a href="/terms" class="footer-link">Terms</a> | <a href="/privacy" class="footer-link">Privacy</a></p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginForm = document.getElementById('studentLoginForm');
+      const identifierInput = document.getElementById('studentIdentifier');
+      const errorDiv = document.getElementById('loginError');
+      const loader = document.getElementById('overlayLoader');
+      const resultCard = document.getElementById('portalResultCard');
+      const resetBtn = document.getElementById('resetLoginBtn');
+
+      // Auto check query param if student arrives via /login?regId=...
+      const urlParams = new URLSearchParams(window.location.search);
+      const prefill = urlParams.get('regId') || urlParams.get('email');
+      if (prefill) {
+        identifierInput.value = prefill;
+        performLogin(prefill);
+      }
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const value = identifierInput.value.trim();
+        if (!value) {
+          showError('Please enter your registered Email Address or Registration ID.');
+          return;
+        }
+        performLogin(value);
+      });
+
+      resetBtn.addEventListener('click', () => {
+        resultCard.style.display = 'none';
+        loginForm.style.display = 'block';
+        identifierInput.value = '';
+        errorDiv.style.display = 'none';
+        identifierInput.focus();
+      });
+
+      async function performLogin(identifierStr) {
+        hideError();
+        loader.style.display = 'flex';
+
+        try {
+          const res = await fetch('/api/student-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ identifier: identifierStr })
+          });
+
+          const data = await res.json();
+          loader.style.display = 'none';
+
+          if (!res.ok || !data.success) {
+            showError(data.message || 'No matching student record found.');
+            return;
+          }
+
+          // Populate Student Result Card
+          const s = data.student;
+          document.getElementById('resStudentName').textContent = s.fullName;
+          document.getElementById('resRegId').textContent = s.registrationId;
+          document.getElementById('resCourse').textContent = s.course;
+          document.getElementById('resEmail').textContent = s.email;
+          document.getElementById('resCollege').textContent = s.collegeName || 'N/A';
+          document.getElementById('resStatus').textContent = s.paymentStatus || 'VERIFIED';
+
+          const redirectUrl = data.redirectUrl || 'https://www.gyanteerthlearning.online/login/';
+          document.getElementById('resGyanteerthBtn').setAttribute('href', redirectUrl);
+
+          const pdfBtn = document.getElementById('resPdfBtn');
+          pdfBtn.setAttribute('href', s.pdfUrl || `/api/download-receipt?regId=${encodeURIComponent(s.registrationId)}`);
+          pdfBtn.setAttribute('download', `Receipt_${s.registrationId}.pdf`);
+
+          // Hide form, show result card
+          loginForm.style.display = 'none';
+          resultCard.style.display = 'block';
+
+        } catch (err) {
+          loader.style.display = 'none';
+          showError('Unable to connect to login service. Please try again.');
+        }
+      }
+
+      function showError(msg) {
+        errorDiv.textContent = msg;
+        errorDiv.style.display = 'block';
+      }
+
+      function hideError() {
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -7,6 +7,10 @@ require('dotenv').config();
 
 const { router: registrationRoutes } = require('./routes/registration');
 const paymentRoutes = require('./routes/payment');
+const { connectDB } = require('./services/db');
+
+// Connect to MongoDB Database (if MONGODB_URI is provided in .env)
+connectDB().catch(err => console.warn('[MONGODB INIT WARNING]', err.message));
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +56,7 @@ app.use('/api/payment', paymentRoutes);
 // Clean Page Route Handlers
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/form', (req, res) => res.sendFile(path.join(__dirname, 'public', 'form.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')));
 app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')));
 app.get('/success', (req, res) => res.sendFile(path.join(__dirname, 'public', 'success.html')));

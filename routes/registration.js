@@ -143,9 +143,92 @@ router.post('/validate-promo', (req, res) => {
   }
 });
 
+// POST /api/student-login - Student Portal Login / Lookup
+const excelService = require('../services/excel');
+router.post('/student-login', async (req, res) => {
+  try {
+    const { identifier } = req.body;
+    if (!identifier || typeof identifier !== 'string' || !identifier.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid Email Address or Registration ID.'
+      });
+    }
+
+    const queryStr = identifier.trim().toLowerCase();
+    
+    // 1. Check MongoDB first (if connected)
+    const dbService = require('../services/db');
+    let foundDoc = await dbService.findRegistrationInMongo(queryStr);
+    let found = null;
+
+    if (foundDoc) {
+      found = {
+        'Registration ID': foundDoc.registrationId,
+        'Full Name': foundDoc.fullName,
+        'Email': foundDoc.email,
+        'WhatsApp Number': foundDoc.whatsappNumber,
+        'College / School': foundDoc.collegeName,
+        'Stream / Class': foundDoc.stream,
+        'Course': foundDoc.course,
+        'Payment Status': foundDoc.paymentStatus,
+        'Payment Date': foundDoc.createdAt ? foundDoc.createdAt.toISOString() : '',
+        'PDF URL': foundDoc.pdfUrl
+      };
+    } else {
+      // 2. Fallback to Excel & Google Sheet merged records
+      const allRegistrations = await excelService.readRegistrationsAsync();
+      found = allRegistrations.find(r => {
+        const regId = (r['Registration ID'] || r['ID'] || r.registrationId || '').toLowerCase();
+        const email = (r['Email'] || r.email || '').toLowerCase();
+        const phone = (r['WhatsApp Number'] || r.whatsappNumber || r.phone || '').replace(/[\s\-\+]/g, '');
+        const cleanQuery = queryStr.replace(/[\s\-\+]/g, '');
+        
+        return (regId === queryStr || email === queryStr || (cleanQuery.length >= 7 && phone.includes(cleanQuery)));
+      });
+    }
+
+    if (!found) {
+      return res.status(404).json({
+        success: false,
+        message: 'No enrollment record found for this Email or Registration ID. Please check your details or complete registration first.'
+      });
+    }
+
+    const regId = found['Registration ID'] || found['ID'] || found.registrationId || 'REG-2026-0001';
+    const pdfUrl = found['PDF URL'] || `/api/download-receipt?regId=${encodeURIComponent(regId)}`;
+    const redirectUrl = process.env.SUCCESS_REDIRECT_URL || 'https://www.gyanteerthlearning.online/login/';
+
+    return res.json({
+      success: true,
+      message: 'Student login successful!',
+      student: {
+        registrationId: regId,
+        fullName: found['Full Name'] || found.fullName || 'Student',
+        email: found['Email'] || found.email || '',
+        whatsappNumber: found['WhatsApp Number'] || found.whatsappNumber || '',
+        collegeName: found['College / School'] || found.collegeName || 'N/A',
+        stream: found['Stream / Class'] || found.stream || '',
+        course: found['Course'] || found.course || 'Complete All-In-One Career Package',
+        paymentStatus: found['Payment Status'] || found.paymentStatus || 'SUCCESS',
+        paymentDate: found['Payment Date'] || found.timestamp || '',
+        pdfUrl: pdfUrl
+      },
+      redirectUrl: redirectUrl
+    });
+  } catch (err) {
+    console.error('[STUDENT LOGIN ERROR]', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while performing student login lookup.'
+    });
+  }
+});
+
 module.exports = {
   router,
   COURSES,
   PROMO_CODES,
   calculateDiscount
 };
+

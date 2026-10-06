@@ -1,6 +1,6 @@
 {
   "counters": {
-    "2627": 35
+    "2627": 39
   },
   "byPayment": {
     "pay_pdfkit_live_777": {
@@ -141,6 +141,22 @@
     },
     "REG-2026-REDIRECTTEST": {
       "no": "DT/2627/35",
+      "emailed": false
+    },
+    "REG-2026-LOCALSERVICEFONT": {
+      "no": "DT/2627/36",
+      "emailed": false
+    },
+    "REG-2026-PRECISEFILTER": {
+      "no": "DT/2627/37",
+      "emailed": false
+    },
+    "REG-2026-PDFLIBPURE": {
+      "no": "DT/2627/38",
+      "emailed": false
+    },
+    "FREE_PROMO_92706719": {
+      "no": "DT/2627/39",
       "emailed": false
     }
   }

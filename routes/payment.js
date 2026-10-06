@@ -6,6 +6,7 @@ const googleSheetService = require('../services/googleSheet');
 const pdfInvoiceService = require('../services/pdfInvoice');
 const cloudStorageService = require('../services/cloudStorage');
 const emailService = require('../services/email');
+const dbService = require('../services/db');
 const { COURSES, PROMO_CODES, calculateDiscount } = require('./registration');
 require('dotenv').config();
 
@@ -101,7 +102,8 @@ router.post('/create-order', async (req, res) => {
         }
       }
 
-      // Await Google Sheet sync to guarantee persistence on Vercel
+      // Sync to MongoDB & Google Sheet
+      await dbService.saveRegistrationToMongo({ ...fullPayload, pdfUrl: finalPdfUrl }).catch(err => console.error('[MONGO SYNC ERROR]', err));
       await googleSheetService.appendToGoogleSheet({
         ...fullPayload,
         pdfUrl: finalPdfUrl
@@ -251,7 +253,8 @@ router.post('/verify', async (req, res) => {
       }
     }
 
-    // 6. Asynchronously push to Google Sheet (includes Cloud / Local PDF Download Link)
+    // 6. Asynchronously push to MongoDB & Google Sheet (includes Cloud / Local PDF Download Link)
+    await dbService.saveRegistrationToMongo({ ...fullPayload, pdfUrl: finalPdfUrl }).catch(err => console.error('[MONGO SYNC ERROR]', err));
     await googleSheetService.appendToGoogleSheet({
       ...fullPayload,
       pdfUrl: finalPdfUrl
