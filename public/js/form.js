@@ -210,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
       semester: document.getElementById('semester').value,
       courseId: courseSelect.value,
       promoCode: currentAppliedPromo,
+      referenceNumber: (document.getElementById('referenceNumber')?.value || '').trim(),
+      reffernceNumber: (document.getElementById('referenceNumber')?.value || '').trim(),
       termsAccepted: document.getElementById('termsAccepted').checked
     };
 

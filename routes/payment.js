@@ -37,8 +37,11 @@ router.post('/create-order', async (req, res) => {
       semester,
       courseId,
       promoCode,
+      referenceNumber,
       termsAccepted
     } = req.body;
+
+    const cleanRefNumber = (referenceNumber || req.body.reffernceNumber || req.body['REFFERNCE NUMBER'] || '').toString().trim();
 
     // Auto-sanitize & normalize all fields with safe fallbacks
     const cleanFullName = (fullName && typeof fullName === 'string' && fullName.trim().length >= 2) ? fullName.trim() : 'Student';
@@ -79,6 +82,7 @@ router.post('/create-order', async (req, res) => {
         semester: cleanSem,
         course: selectedCourse.name,
         promoCode: appliedPromo,
+        referenceNumber: cleanRefNumber,
         originalAmount: originalPrice,
         discountAmount: discountAmount,
         finalAmount: 0,
@@ -218,6 +222,7 @@ router.post('/verify', async (req, res) => {
       semester: registrationData.semester,
       course: registrationData.courseName,
       promoCode: registrationData.promoCode || 'N/A',
+      referenceNumber: (registrationData.referenceNumber || registrationData.reffernceNumber || registrationData['REFFERNCE NUMBER'] || '').toString().trim(),
       originalAmount: registrationData.originalAmount,
       discountAmount: registrationData.discountAmount,
       finalAmount: registrationData.finalAmount,

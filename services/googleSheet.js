@@ -62,6 +62,7 @@ const DEFAULT_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyWkcUl5ziq
 async function appendToGoogleSheet(regData) {
   const webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL || DEFAULT_WEBHOOK_URL;
   const formattedDate = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  const refNum = (regData.referenceNumber || regData.reffernceNumber || regData['REFFERNCE NUMBER'] || '').toString().trim();
 
   const payload = {
     // Standard camelCase
@@ -75,6 +76,8 @@ async function appendToGoogleSheet(regData) {
     semester: regData.semester || '',
     course: regData.course || regData.courseName || '',
     promoCode: regData.promoCode || 'N/A',
+    referenceNumber: refNum,
+    reffernceNumber: refNum,
     originalAmount: regData.originalAmount || 249,
     discountAmount: regData.discountAmount || 0,
     finalAmount: regData.finalAmount || 249,
@@ -96,6 +99,10 @@ async function appendToGoogleSheet(regData) {
     'Semester': regData.semester || '',
     'Course': regData.course || regData.courseName || '',
     'Promo Code': regData.promoCode || 'N/A',
+    'REFFERNCE NUMBER': refNum,
+    'Reffernce Number': refNum,
+    'Reference Number': refNum,
+    'REFERENCE NUMBER': refNum,
     'Original Amount': regData.originalAmount || 249,
     'Discount': regData.discountAmount || 0,
     'Final Amount': regData.finalAmount || 249,

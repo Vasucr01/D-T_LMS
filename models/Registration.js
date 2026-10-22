@@ -49,6 +49,11 @@ const registrationSchema = new mongoose.Schema({
     type: String,
     default: 'N/A'
   },
+  referenceNumber: {
+    type: String,
+    default: '',
+    trim: true
+  },
   originalAmount: {
     type: Number,
     default: 249

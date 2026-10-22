@@ -21,6 +21,7 @@ const HEADERS = [
   'Semester',
   'Course',
   'Promo Code',
+  'REFFERNCE NUMBER',
   'Original Amount',
   'Discount',
   'Final Amount',
@@ -56,6 +57,7 @@ function initializeExcelFile() {
       { wch: 12 }, // Semester
       { wch: 24 }, // Course
       { wch: 14 }, // Promo Code
+      { wch: 20 }, // REFFERNCE NUMBER
       { wch: 16 }, // Original Amount
       { wch: 14 }, // Discount
       { wch: 14 }, // Final Amount
@@ -160,6 +162,7 @@ function saveRegistration(regData) {
           'Semester': regData.semester || '',
           'Course': regData.course || '',
           'Promo Code': regData.promoCode || 'N/A',
+          'REFFERNCE NUMBER': (regData.referenceNumber || regData.reffernceNumber || regData['REFFERNCE NUMBER'] || '').toString().trim(),
           'Original Amount': regData.originalAmount || 0,
           'Discount': regData.discountAmount || 0,
           'Final Amount': regData.finalAmount || 0,
@@ -178,8 +181,8 @@ function saveRegistration(regData) {
         worksheet['!cols'] = [
           { wch: 16 }, { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 26 },
           { wch: 16 }, { wch: 22 }, { wch: 12 }, { wch: 24 }, { wch: 14 },
-          { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 26 }, { wch: 26 },
-          { wch: 16 }, { wch: 20 }, { wch: 16 }
+          { wch: 20 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 26 },
+          { wch: 26 }, { wch: 16 }, { wch: 20 }, { wch: 16 }
         ];
 
         XLSX.utils.book_append_sheet(workbook, worksheet, 'Registrations');
@@ -238,6 +241,7 @@ function fetchGoogleSheetRegistrations() {
             'Semester': r['Semester'] || r['semester'] || '',
             'Course': r['Course'] || r['course'] || '',
             'Promo Code': r['Promo Code'] || r['promoCode'] || 'N/A',
+            'REFFERNCE NUMBER': r['REFFERNCE NUMBER'] || r['Reference Number'] || r['referenceNumber'] || r['reffernceNumber'] || '',
             'Original Amount': r['Original Amount'] || r['originalAmount'] || 249,
             'Discount': r['Discount'] || r['discountAmount'] || 0,
             'Final Amount': r['Final Amount'] || r['finalAmount'] || 249,

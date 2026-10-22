@@ -95,7 +95,8 @@ async function findRegistrationInMongo(identifierStr) {
 
     const conditions = [
       { registrationId: new RegExp(`^${safeQuery}$`, 'i') },
-      { email: new RegExp(`^${safeQuery}$`, 'i') }
+      { email: new RegExp(`^${safeQuery}$`, 'i') },
+      { referenceNumber: new RegExp(`^${safeQuery}$`, 'i') }
     ];
 
     if (cleanPhone.length >= 7) {
